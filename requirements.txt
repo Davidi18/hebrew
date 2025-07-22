@@ -5,7 +5,7 @@ pydantic==2.5.0
 pydantic-settings==2.1.0
 
 # Hebrew NLP (Updated for HebSpacy)
-hebspacy==0.2.2
+hebspacy
 spacy==3.7.2
 torch>=1.13.0
 
