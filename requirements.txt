@@ -6,8 +6,8 @@ pydantic-settings==2.1.0
 
 # Hebrew NLP (Updated for HebSpacy)
 hebspacy
-spacy==3.7.2
-torch>=1.13.0
+spacy
+torch
 
 # HTTP & API Integration
 httpx==0.25.2
