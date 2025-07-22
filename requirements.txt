@@ -2,7 +2,6 @@
 fastapi>=0.68.0,<0.89.0
 uvicorn[standard]>=0.15.0,<0.21.0
 pydantic>=1.8.2,<1.9.0
-pydantic-settings>=1.0.0,<2.0.0
 
 # Hebrew NLP - constrain to compatible versions
 hebspacy==0.1.7
