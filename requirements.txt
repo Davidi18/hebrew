@@ -21,6 +21,7 @@ redis
 # Utilities
 python-dotenv
 loguru
+PyYAML>=6.0
 
 # Testing
 pytest
