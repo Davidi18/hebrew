@@ -10,7 +10,7 @@ from collections import defaultdict, Counter
 from loguru import logger
 import re
 
-from models.hebrew_loader import hebrew_loader
+from models.hebspacy_loader import hebrew_loader
 
 
 class HebrewKeywordExpander:
