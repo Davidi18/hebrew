@@ -1,7 +1,7 @@
-# Core web framework - STABLE VERSIONS
-fastapi==0.85.0
+# Core web framework - FROZEN KNOWN-GOOD STACK
+fastapi==0.68.2
 pydantic==1.8.2
-uvicorn[standard]==0.18.3
+uvicorn==0.15.0
 
 # Hebrew NLP - TESTED COMBINATION (corrected versions)
 spacy==3.2.2
