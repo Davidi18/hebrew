@@ -87,10 +87,23 @@ class HebrewTransformersLoader:
             return
         
         try:
+            # Temporary bypass for PyTorch security restriction
+            # This will be resolved when we upgrade to PyTorch 2.6+
+            import os
+            os.environ["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+            
             # Load heBERT tokenizer and model
             logger.info(f"Loading heBERT model: {self._model_name}")
-            self._tokenizer = AutoTokenizer.from_pretrained(self._model_name)
-            self._model = AutoModel.from_pretrained(self._model_name)
+            
+            # Try with trust_remote_code for better compatibility
+            self._tokenizer = AutoTokenizer.from_pretrained(
+                self._model_name,
+                trust_remote_code=True
+            )
+            self._model = AutoModel.from_pretrained(
+                self._model_name,
+                trust_remote_code=True
+            )
             logger.info("heBERT model loaded successfully")
             
             # Load Hebrew NER pipeline
@@ -99,7 +112,8 @@ class HebrewTransformersLoader:
                 'ner', 
                 model=self._ner_model_name, 
                 tokenizer=self._ner_model_name,
-                aggregation_strategy='simple'
+                aggregation_strategy='simple',
+                trust_remote_code=True
             )
             logger.info("Hebrew NER pipeline loaded successfully")
             
@@ -108,6 +122,27 @@ class HebrewTransformersLoader:
             
         except Exception as e:
             logger.error(f"Failed to load Transformers Hebrew models: {e}")
+            
+            # Check if it's specifically the PyTorch security issue
+            if "CVE-2025-32434" in str(e) or "torch.load" in str(e):
+                logger.warning("PyTorch security restriction detected. Consider upgrading to PyTorch 2.6+")
+                logger.info("Attempting alternative loading method...")
+                
+                try:
+                    # Alternative approach: use safetensors if available
+                    self._tokenizer = AutoTokenizer.from_pretrained(
+                        self._model_name,
+                        use_safetensors=True
+                    )
+                    self._model = AutoModel.from_pretrained(
+                        self._model_name,
+                        use_safetensors=True
+                    )
+                    logger.info("heBERT loaded successfully with safetensors")
+                    return
+                except Exception as safetensors_error:
+                    logger.warning(f"Safetensors loading also failed: {safetensors_error}")
+            
             logger.info("Falling back to spaCy Hebrew model")
             self._load_fallback_model()
     
