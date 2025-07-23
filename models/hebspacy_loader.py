@@ -222,6 +222,45 @@ class HebrewTransformersLoader:
                 'entities': [],
                 'model_used': 'fallback'
             }
+    
+    # Backward compatibility methods for existing code
+    async def load_model(self, force_reload: bool = False) -> Dict[str, Any]:
+        """Backward compatibility: Load model (same as get_model)."""
+        if force_reload:
+            # Reset model components to force reload
+            self._tokenizer = None
+            self._model = None
+            self._ner_pipeline = None
+            self._fallback_nlp = None
+        
+        return await self.get_model()
+    
+    def is_loaded(self) -> bool:
+        """Backward compatibility: Check if model is loaded."""
+        return self._is_model_loaded()
+    
+    async def get_model_info(self) -> Dict[str, Any]:
+        """Backward compatibility: Get model information."""
+        try:
+            model_components = await self.get_model()
+            return {
+                "loaded": True,
+                "model_name": model_components.get('model_name', 'unknown'),
+                "type": "Hebrew Transformers (heBERT/AlephBERT)",
+                "capabilities": model_components.get('capabilities', []),
+                "lang": "he",
+                "pipeline": ["tokenizer", "ner", "embeddings"],
+                "vocab_size": "N/A (Transformers)",
+                "has_vectors": True,
+                "vectors_length": 768  # Standard BERT embedding size
+            }
+        except Exception as e:
+            return {
+                "loaded": False,
+                "error": str(e),
+                "model_name": "unknown",
+                "type": "Hebrew Transformers (heBERT/AlephBERT)"
+            }
 
 # Global instance
 hebrew_loader = HebrewTransformersLoader()
