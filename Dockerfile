@@ -32,25 +32,19 @@ RUN pip uninstall hebspacy -y || true
 # Install Transformers for advanced Hebrew NLP
 RUN pip install --no-cache-dir transformers torch sentencepiece
 
-# Download and cache Hebrew models (heBERT and AlephBERT)
-RUN python -c "
-from transformers import AutoTokenizer, AutoModel, pipeline
-import torch
-
-print('Downloading heBERT model...')
-tokenizer = AutoTokenizer.from_pretrained('avichr/heBERT')
-model = AutoModel.from_pretrained('avichr/heBERT')
-print('heBERT downloaded successfully')
-
-print('Downloading AlephBERT model...')
-tokenizer_aleph = AutoTokenizer.from_pretrained('onlplab/alephbert-base')
-model_aleph = AutoModel.from_pretrained('onlplab/alephbert-base')
-print('AlephBERT downloaded successfully')
-
-print('Testing Hebrew NER pipeline...')
-ner_pipeline = pipeline('ner', model='avichr/heBERT_NER', tokenizer='avichr/heBERT_NER')
-result = ner_pipeline('שלום, אני דוד מתל אביב')
-print('NER test successful:', result)
+# Download and cache Hebrew models (heBERT only - lightweight version)
+RUN python -c "\
+from transformers import AutoTokenizer, AutoModel, pipeline; \
+import torch; \
+print('Downloading heBERT model (lightweight)...'); \
+tokenizer = AutoTokenizer.from_pretrained('avichr/heBERT'); \
+model = AutoModel.from_pretrained('avichr/heBERT'); \
+print('heBERT downloaded successfully'); \
+print('Testing Hebrew NER pipeline...'); \
+ner_pipeline = pipeline('ner', model='avichr/heBERT_NER', tokenizer='avichr/heBERT_NER'); \
+result = ner_pipeline('שלום, אני דוד מתל אביב'); \
+print('NER test successful:', result); \
+print('Hebrew Transformers (lightweight) setup complete!'); \
 "
 
 # Verify Transformers Hebrew installation
