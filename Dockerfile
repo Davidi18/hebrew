@@ -27,7 +27,8 @@ RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download HebSpacy model (hebspacy 0.1.7)
-RUN python -c "import hebspacy; hebspacy.download('he')"
+# Note: hebspacy 0.1.7 downloads the model automatically on first use
+# RUN python -c "import hebspacy; nlp = hebspacy.load()"
 
 # Copy application code
 COPY . .
