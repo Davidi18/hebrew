@@ -25,10 +25,22 @@ COPY requirements.txt .
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip
 
-# Explicitly prevent Pydantic v2 installation
-RUN pip install --no-cache-dir "pydantic>=1.8.2,<2.0.0" --force-reinstall
+# Force install exact Pydantic v1 and prevent any upgrades
+RUN pip install --no-cache-dir --no-deps pydantic==1.10.18
+RUN pip install --no-cache-dir --no-deps typing-extensions==4.8.0
 
-RUN pip install --no-cache-dir -r requirements.txt
+# Install core dependencies with --no-deps to prevent conflicts
+RUN pip install --no-cache-dir --no-deps fastapi==0.85.0
+RUN pip install --no-cache-dir --no-deps starlette==0.20.4
+RUN pip install --no-cache-dir --no-deps uvicorn==0.18.3
+
+# Install spaCy and hebspacy with --no-deps
+RUN pip install --no-cache-dir --no-deps spacy==3.2.2
+RUN pip install --no-cache-dir --no-deps hebspacy==0.1.7
+
+# Now install remaining dependencies normally (they shouldn't conflict)
+RUN pip install --no-cache-dir -r requirements.txt --no-deps || true
+RUN pip install --no-cache-dir tokenizers==0.13.3 httpx aiohttp pandas numpy redis python-dotenv loguru PyYAML pytest pytest-asyncio
 
 # Download HebSpacy model
 RUN pip install --no-cache-dir https://github.com/8400TheHealthNetwork/HebSpacy/releases/download/he_ner_news_trf-3.2.1/he_ner_news_trf-3.2.1-py3-none-any.whl
