@@ -19,7 +19,7 @@ try:
 except ImportError:
     TRANSFORMERS_AVAILABLE = False
 
-from app.core.config import settings
+from config.settings import settings
 
 logger = logging.getLogger(__name__)
 
