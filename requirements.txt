@@ -1,11 +1,12 @@
 # Core FastAPI stack - upgraded for PyTorch 2.6+ compatibility
 fastapi>=0.100.0
 pydantic>=2.0.0
+pydantic-settings>=2.0.0
 uvicorn>=0.23.0
 typing-extensions>=4.10.0
 
-# Hebrew NLP - Using Transformers with heBERT/AlephBERT for superior Hebrew understanding
-spacy==3.2.2  # Keep for fallback tokenization
+# Hebrew NLP stack - upgraded spaCy for Pydantic v2 compatibility
+spacy>=3.6.0  # Supports Pydantic v2
 # hebspacy==0.1.7  # Removed due to persistent package corruption issues
 transformers>=4.20.0
 torch>=2.6.0
