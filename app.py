@@ -37,8 +37,8 @@ async def startup_event():
         
         # Load Hebrew Transformers models
         logger.info("Loading Hebrew Transformers models...")
-        model_components = await hebrew_loader.get_model()
-        logger.success(f"Hebrew Transformers models loaded: {model_components.get('model_name', 'unknown')}")
+        await hebrew_loader.load_model()
+        logger.success("Hebrew Transformers models loaded successfully")
         
         # Store startup time
         app.state.startup_time = datetime.now()
@@ -116,20 +116,7 @@ async def root():
 @app.get("/info")
 async def service_info():
     """Detailed service information and model status."""
-    try:
-        model_components = await hebrew_loader.get_model()
-        model_info = {
-            "loaded": True,
-            "model_name": model_components.get('model_name', 'unknown'),
-            "capabilities": model_components.get('capabilities', []),
-            "type": "Hebrew Transformers (heBERT/AlephBERT)"
-        }
-    except Exception as e:
-        model_info = {
-            "loaded": False,
-            "error": str(e),
-            "type": "Hebrew Transformers (heBERT/AlephBERT)"
-        }
+    model_info = await hebrew_loader.get_model_info()
     
     return {
         "service": {
