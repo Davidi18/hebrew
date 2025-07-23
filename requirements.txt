@@ -1,10 +1,11 @@
-# Core web framework - FROZEN KNOWN-GOOD STACK
-fastapi==0.68.2
-pydantic==1.8.2
+# Core web framework - OFFICIAL SPACY FIX (GitHub Issue #12659)
+fastapi==0.68.0
+pydantic==1.10.8
 uvicorn==0.15.0
+typing-extensions==4.5.0
 
-# Hebrew NLP - TESTED COMBINATION (corrected versions)
-spacy==3.2.2
+# Hebrew NLP - OFFICIAL SPACY FIX COMBINATION
+spacy==3.4.4
 hebspacy==0.1.7
 nltk==3.8.1
 
