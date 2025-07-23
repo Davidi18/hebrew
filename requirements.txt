@@ -1,6 +1,6 @@
 # Core web framework - STABLE VERSIONS
-fastapi==0.85.1
-pydantic==1.10.12
+fastapi==0.85.0
+pydantic==1.8.2
 uvicorn[standard]==0.18.3
 
 # Hebrew NLP - TESTED COMBINATION (corrected versions)
