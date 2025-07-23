@@ -17,6 +17,23 @@ class KeywordData(BaseModel):
     competition: Optional[str] = Field(default=None, description="Competition level")
 
 
+class KeywordVolume(BaseModel):
+    """Keyword volume data."""
+    keyword: str = Field(..., description="The keyword")
+    volume: Optional[int] = Field(default=None, description="Monthly search volume")
+    data_source: str = Field(default="DataForSEO", description="Data source")
+    last_updated: Optional[datetime] = Field(default=None, description="Last update timestamp")
+
+
+class ResponseMetadata(BaseModel):
+    """Response metadata information."""
+    timestamp: datetime = Field(default_factory=datetime.now, description="Response timestamp")
+    processing_time_ms: Optional[float] = Field(default=None, description="Processing time in milliseconds")
+    request_id: Optional[str] = Field(default=None, description="Request ID for tracking")
+    data_source: Optional[str] = Field(default=None, description="Data source used")
+    cache_hit: bool = Field(default=False, description="Whether response was served from cache")
+
+
 class SemanticCluster(BaseModel):
     """Semantic cluster of related keywords."""
     cluster_name: str = Field(..., description="Name of the cluster")
