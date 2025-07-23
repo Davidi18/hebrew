@@ -94,6 +94,7 @@ class HebSpacyLoader:
                 logger.warning(f"HebSpacy not properly available: {e}, using fallback")
                 # Skip to fallback immediately
                 model = spacy.blank("he")
+                model.add_pipe('sentencizer')  # Add sentence boundary detection
                 logger.info("Using blank Hebrew spaCy model as fallback")
                 return model
             
@@ -123,6 +124,7 @@ class HebSpacyLoader:
                 logger.info("Falling back to blank Hebrew spaCy model")
                 
                 model = spacy.blank("he")
+                model.add_pipe('sentencizer')  # Add sentence boundary detection
                 logger.info("Successfully created blank Hebrew spaCy model as fallback")
                 return model
                 
@@ -132,6 +134,7 @@ class HebSpacyLoader:
             try:
                 import spacy
                 model = spacy.blank("he")
+                model.add_pipe('sentencizer')  # Add sentence boundary detection
                 logger.warning("Using emergency fallback: blank Hebrew model")
                 return model
             except Exception as fallback_error:
