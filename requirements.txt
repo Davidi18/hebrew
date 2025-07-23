@@ -1,29 +1,34 @@
 # Web Framework - compatible with pydantic 1.x
 fastapi==0.85.0
 uvicorn[standard]==0.18.3
-pydantic==1.8.2
+pydantic>=1.8.2,<2.0.0
+starlette==0.22.0
 
 # Hebrew NLP - constrain to compatible versions
 hebspacy==0.1.7
 spacy==3.2.2
 tokenizers==0.13.3
 
-# HTTP & API
+# HTTP & API - pin to prevent pydantic v2 conflicts
 httpx>=0.24.0,<0.26.0
 aiohttp>=3.8.0,<3.9.0
 
-# Data Processing
+# Data Processing - pin to prevent pydantic v2 conflicts
 pandas>=1.5.0,<2.1.0
 numpy>=1.21.0,<1.25.0
 
 # Caching
 redis>=4.0.0,<5.0.0
 
-# Utilities
+# Utilities - pin to prevent pydantic v2 conflicts
 python-dotenv>=0.19.0,<1.1.0
 loguru>=0.6.0,<0.8.0
 PyYAML>=6.0,<7.0
 
-# Testing
+# Testing - pin to prevent pydantic v2 conflicts
 pytest>=7.0.0,<8.0.0
 pytest-asyncio>=0.19.0,<0.22.0
+
+# Explicit constraints to prevent Pydantic v2
+pydantic-core<2.0.0  # Prevent pydantic v2 core
+typing-extensions>=3.7.4.3,<5.0.0  # Compatible with pydantic v1
