@@ -4,8 +4,7 @@ Uses Pydantic Settings for environment variable management.
 """
 
 from typing import Optional
-from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic import Field, BaseSettings
 
 
 class Settings(BaseSettings):
