@@ -3,9 +3,9 @@ fastapi==0.85.1
 pydantic==1.10.12
 uvicorn[standard]==0.18.3
 
-# Hebrew NLP - TESTED COMBINATION
-spacy==3.4.4
-hebspacy==0.2.2
+# Hebrew NLP - TESTED COMBINATION (corrected versions)
+spacy==3.2.2
+hebspacy==0.1.7
 nltk==3.8.1
 
 # DataForSEO and HTTP
