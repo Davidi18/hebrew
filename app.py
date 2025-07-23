@@ -16,7 +16,7 @@ from loguru import logger
 import uvicorn
 
 from config.settings import settings
-from models.hebrew_loader import hebrew_loader
+from models.hebspacy_loader import hebrew_loader
 from utils.cache_manager import cache_manager
 from services.search_data_service import search_data_service
 from api.routes import analysis, clusters, keywords, health
@@ -35,10 +35,10 @@ async def startup_event():
         # Initialize search data service
         await search_data_service.initialize()
         
-        # Load Hebrew Transformers model
+        # Load Hebrew Transformers models
         logger.info("Loading Hebrew Transformers models...")
-        await hebrew_loader.get_model()
-        logger.success("Hebrew Transformers models loaded successfully")
+        model_components = await hebrew_loader.get_model()
+        logger.success(f"Hebrew Transformers models loaded: {model_components.get('model_name', 'unknown')}")
         
         # Store startup time
         app.state.startup_time = datetime.now()
@@ -116,26 +116,42 @@ async def root():
 @app.get("/info")
 async def service_info():
     """Detailed service information and model status."""
-    model_info = await hebrew_loader.get_model_info()
+    try:
+        model_components = await hebrew_loader.get_model()
+        model_info = {
+            "loaded": True,
+            "model_name": model_components.get('model_name', 'unknown'),
+            "capabilities": model_components.get('capabilities', []),
+            "type": "Hebrew Transformers (heBERT/AlephBERT)"
+        }
+    except Exception as e:
+        model_info = {
+            "loaded": False,
+            "error": str(e),
+            "type": "Hebrew Transformers (heBERT/AlephBERT)"
+        }
     
     return {
         "service": {
-            "name": settings.service_name,
+            "name": "Hebrew Content Intelligence Service",
             "version": settings.version,
-            "debug": settings.debug,
-            "log_level": settings.log_level
+            "status": "running",
+            "startup_time": app.state.startup_time.isoformat() if hasattr(app.state, 'startup_time') else None,
+            "debug_mode": settings.debug
         },
         "model": model_info,
-        "configuration": {
+        "cache": {
+            "enabled": settings.cache_enabled,
+            "ttl": settings.cache_ttl
+        },
+        "limits": {
             "max_content_length": settings.max_content_length,
-            "request_timeout": settings.request_timeout,
-            "cache_type": settings.cache_type,
-            "cache_ttl": settings.cache_ttl
+            "max_keywords": settings.max_keywords
         },
         "capabilities": [
-            "Hebrew morphological analysis",
-            "Root extraction (שורש המילה)",
+            "Hebrew tokenization with heBERT",
             "Named Entity Recognition",
+            "Hebrew embeddings and contextual analysis",
             "Semantic clustering",
             "Keyword expansion",
             "Content theme analysis",
