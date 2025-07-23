@@ -26,9 +26,13 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download HebSpacy model (hebspacy 0.1.7)
-# Note: hebspacy 0.1.7 downloads the model automatically on first use
-# RUN python -c "import hebspacy; nlp = hebspacy.load()"
+# Fix HebSpacy installation - clean up any corrupted versions
+RUN pip uninstall hebspacy -y || true
+RUN pip cache purge
+RUN pip install hebspacy==0.1.7 --force-reinstall --no-cache-dir
+
+# Verify HebSpacy installation
+RUN python -c "import hebspacy; print('HebSpacy version:', hebspacy.__version__); print('Has load method:', hasattr(hebspacy, 'load')); assert hasattr(hebspacy, 'load'), 'HebSpacy load method missing'"
 
 # Copy application code
 COPY . .
