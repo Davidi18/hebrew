@@ -138,6 +138,37 @@ class HebSpacyLoader:
                 logger.error(f"Emergency fallback failed: {fallback_error}")
                 raise RuntimeError(f"Could not load any Hebrew model: {e}")
     
+    async def _validate_model(self) -> None:
+        """Validate that the model has required Hebrew capabilities."""
+        if not self._model:
+            raise ValueError("Model not loaded")
+            
+        # Test Hebrew text processing
+        test_text = "זהו טקסט בדיקה בעברית עם ניתוח מורפולוגי"
+        
+        try:
+            doc = self._model(test_text)
+            
+            # Check basic tokenization
+            if len(doc) == 0:
+                raise ValueError("Model failed basic tokenization")
+                
+            # Check morphological analysis capabilities
+            has_morphology = any(token.morph for token in doc)
+            if not has_morphology:
+                logger.warning("Model may not support Hebrew morphological analysis")
+                
+            # Check NER capabilities
+            has_ner = len(self._model.pipe_names) > 0 and 'ner' in self._model.pipe_names
+            if not has_ner:
+                logger.warning("Model may not support Named Entity Recognition")
+                
+            logger.debug("Model validation completed successfully")
+            
+        except Exception as e:
+            logger.error(f"Model validation failed: {e}")
+            raise
+    
     async def get_model(self) -> Language:
         """Get the loaded model, loading it if necessary."""
         if self._model is None:
