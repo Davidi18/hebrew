@@ -13,7 +13,7 @@ from httpx import AsyncClient
 # Import the main app
 from app import app
 from config.settings import settings
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 from services.hebrew_analyzer import hebrew_analyzer
 from services.semantic_clusters import clustering_service
 from services.keyword_expander import keyword_expander
@@ -44,16 +44,16 @@ async def async_client() -> AsyncGenerator[AsyncClient, None]:
 
 
 @pytest.fixture(scope="session")
-async def mock_hebspacy_model():
-    """Mock HebSpacy model for testing."""
+async def mock_hebrew_model():
+    """Mock Hebrew model for testing."""
     mock_model = MagicMock()
     
     # Mock model attributes
     mock_model.lang = "he"
     mock_model.meta = {
-        "name": "he_core_news_lg",
-        "version": "3.4.0",
-        "description": "Hebrew core news model"
+        "name": "hebrew-transformers",
+        "version": "1.0.0",
+        "description": "Hebrew Transformers model"
     }
     
     # Mock tokenization
@@ -246,9 +246,9 @@ async def setup_test_environment():
 @pytest.fixture
 async def mock_services():
     """Mock all services for isolated testing."""
-    # Mock HebSpacy loader
-    hebspacy_loader.load_model = AsyncMock()
-    hebspacy_loader.analyze_text = AsyncMock()
+    # Mock Hebrew loader
+    hebrew_loader.load_model = AsyncMock()
+    hebrew_loader.analyze_text = AsyncMock()
     
     # Mock Hebrew analyzer
     hebrew_analyzer.analyze_content = AsyncMock()
@@ -263,7 +263,7 @@ async def mock_services():
     search_data_service.get_comprehensive_keyword_data = AsyncMock()
     
     yield {
-        "hebspacy_loader": hebspacy_loader,
+        "hebrew_loader": hebrew_loader,
         "hebrew_analyzer": hebrew_analyzer,
         "clustering_service": clustering_service,
         "keyword_expander": keyword_expander,
