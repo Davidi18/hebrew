@@ -8,7 +8,6 @@ import asyncio
 from pathlib import Path
 from typing import Optional, Dict, Any
 from loguru import logger
-import hebspacy
 import spacy
 from spacy.language import Language
 
@@ -23,7 +22,7 @@ class HebSpacyLoader:
     
     def __init__(self):
         self._model: Optional[Language] = None
-        self._model_name = settings.hebspacy_model
+        self._model_name = "he_ner_news_trf"
         self._cache_dir = Path(settings.hebspacy_cache_dir)
         self._is_loading = False
         self._load_lock = asyncio.Lock()
@@ -77,18 +76,26 @@ class HebSpacyLoader:
     def _load_model_sync(self) -> Language:
         """Synchronous model loading for thread executor."""
         try:
-            # Try loading HebSpacy model
-            model = hebspacy.load(self._model_name)
-            logger.debug(f"Loaded HebSpacy model: {self._model_name}")
+            # Load HebSpacy model using spaCy (correct API for hebspacy 0.1.7)
+            import spacy
+            model = spacy.load("he_ner_news_trf")
+            logger.debug(f"Loaded HebSpacy model: he_ner_news_trf")
             return model
             
-        except OSError:
-            # Model not found, try to download
-            logger.info(f"HebSpacy model '{self._model_name}' not found, downloading...")
-            hebspacy.download(self._model_name)
-            model = hebspacy.load(self._model_name)
-            logger.info(f"Downloaded and loaded HebSpacy model: {self._model_name}")
-            return model
+        except OSError as e:
+            # Model not found - HebSpacy 0.1.7 downloads automatically on first import
+            logger.error(f"HebSpacy model 'he_ner_news_trf' not found: {e}")
+            logger.info("Make sure hebspacy is properly installed with: pip install hebspacy")
+            
+            # Try fallback to basic Hebrew spaCy model
+            try:
+                import spacy
+                model = spacy.blank("he")
+                logger.warning("Using blank Hebrew model as fallback")
+                return model
+            except Exception as fallback_error:
+                logger.error(f"Failed to create fallback model: {fallback_error}")
+                raise RuntimeError(f"Could not load Hebrew model: {e}")
     
     async def _validate_model(self) -> None:
         """Validate that the model has required Hebrew capabilities."""
