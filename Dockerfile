@@ -48,13 +48,13 @@ print('Hebrew Transformers (lightweight) setup complete!'); \
 "
 
 # Verify Transformers Hebrew installation
-RUN python -c "
-import transformers
-import torch
-print('Transformers version:', transformers.__version__)
-print('PyTorch version:', torch.__version__)
-print('CUDA available:', torch.cuda.is_available())
-print('Hebrew Transformers setup complete!')
+RUN python -c "\
+import transformers; \
+import torch; \
+print('Transformers version:', transformers.__version__); \
+print('PyTorch version:', torch.__version__); \
+print('CUDA available:', torch.cuda.is_available()); \
+print('Hebrew Transformers setup complete!'); \
 "
 
 # Copy application code
