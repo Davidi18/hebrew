@@ -5,7 +5,8 @@ Uses Pydantic Settings for environment variable management.
 
 import os
 from typing import Optional
-from pydantic import BaseSettings, Field
+from pydantic import Field
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -39,10 +40,11 @@ class Settings(BaseSettings):
     max_content_length: int = Field(default=50000, env="MAX_CONTENT_LENGTH")
     request_timeout: int = Field(default=30, env="REQUEST_TIMEOUT")
     max_concurrent_requests: int = Field(default=10, env="MAX_CONCURRENT_REQUESTS")
-    
-    class Config:
-        env_file = ".env"
-        case_sensitive = False
+
+    model_config = {
+        "env_file": ".env",
+        "case_sensitive": False
+    }
 
 
 # Global settings instance
