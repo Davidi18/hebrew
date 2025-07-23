@@ -1,6 +1,6 @@
 """
 Hebrew Content Intelligence Service - Main FastAPI Application
-Advanced Hebrew content analysis with Hebrew Transformers, semantic clustering, and DataForSEO integration.
+Advanced Hebrew content analysis with lightweight Hebrew Transformers (heBERT), semantic clustering, and DataForSEO integration.
 """
 
 import asyncio
@@ -67,7 +67,7 @@ async def shutdown_event():
 # Create FastAPI application
 app = FastAPI(
     title="Hebrew Content Intelligence Service",
-    description="Advanced Hebrew content analysis using Hebrew Transformers, semantic clustering, and DataForSEO integration",
+    description="Advanced Hebrew content analysis using lightweight Hebrew Transformers (heBERT), semantic clustering, and DataForSEO integration",
     version=settings.version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
@@ -136,7 +136,7 @@ async def service_info():
             "max_keywords": settings.max_keywords
         },
         "capabilities": [
-            "Hebrew tokenization with heBERT",
+            "Hebrew tokenization with heBERT (lightweight)",
             "Named Entity Recognition",
             "Hebrew embeddings and contextual analysis",
             "Semantic clustering",
