@@ -15,7 +15,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config.settings import settings
-from models.hebrew_loader import hebrew_loader
+from models.hebspacy_loader import hebrew_loader
 
 
 async def download_and_verify_models():
