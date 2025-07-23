@@ -1,6 +1,6 @@
 """
 Hebrew Semantic Analyzer
-Advanced Hebrew text analysis using HebSpacy with morphological analysis,
+Advanced Hebrew text analysis using Hebrew Transformers with morphological analysis,
 root extraction, NER, and semantic phrase extraction.
 """
 
@@ -13,7 +13,7 @@ import numpy as np
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 
 
 class HebrewSemanticAnalyzer:
@@ -65,8 +65,8 @@ class HebrewSemanticAnalyzer:
             
         logger.info(f"Starting Hebrew content analysis for {len(text)} characters")
         
-        # Get basic HebSpacy analysis
-        basic_analysis = await hebspacy_loader.analyze_text(text)
+        # Get basic Hebrew Transformers analysis
+        basic_analysis = await hebrew_loader.analyze_text(text)
         
         # Perform advanced analysis
         analysis_tasks = [
