@@ -15,7 +15,7 @@ project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
 from config.settings import settings
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 
 
 async def download_and_verify_models():
@@ -31,7 +31,7 @@ async def download_and_verify_models():
         
         # Download and load model
         logger.info(f"Downloading HebSpacy model: {settings.hebspacy_model}")
-        model = await hebspacy_loader.load_model()
+        model = await hebrew_loader.load_model()
         
         # Verify model functionality
         logger.info("Verifying model functionality...")
@@ -45,7 +45,7 @@ async def download_and_verify_models():
         for i, text in enumerate(test_texts, 1):
             logger.info(f"Testing text {i}/{len(test_texts)}: {text[:30]}...")
             
-            analysis = await hebspacy_loader.analyze_text(text)
+            analysis = await hebrew_loader.analyze_text(text)
             
             # Verify analysis results
             if not analysis or not analysis.get('tokens'):
@@ -60,7 +60,7 @@ async def download_and_verify_models():
             logger.info(f"  - Hebrew ratio: {analysis['language_stats']['hebrew_ratio']:.2f}")
         
         # Get model information
-        model_info = await hebspacy_loader.get_model_info()
+        model_info = await hebrew_loader.get_model_info()
         logger.info("Model information:")
         for key, value in model_info.items():
             logger.info(f"  - {key}: {value}")
