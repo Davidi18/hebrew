@@ -23,8 +23,8 @@ ENV PATH="/root/.cargo/bin:${PATH}"
 COPY requirements.txt .
 
 # Install Python dependencies
-RUN pip install --no-cache-dir --upgrade pip
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
 # Remove HebSpacy from requirements to avoid conflicts
 RUN pip uninstall hebspacy -y || true
@@ -35,16 +35,10 @@ RUN pip install --no-cache-dir transformers torch sentencepiece
 # Note: Hebrew models (heBERT) will be downloaded at runtime to avoid build-time issues
 # This approach is more flexible and avoids PyTorch security restrictions during build
 
-# Verify Transformers Hebrew installation
-RUN python -c "\
-import transformers; \
-import torch; \
-print('Transformers version:', transformers.__version__); \
-print('PyTorch version:', torch.__version__); \
-print('CUDA available:', torch.cuda.is_available()); \
-print('Hebrew Transformers dependencies installed successfully!'); \
-print('Models will be downloaded at runtime for better flexibility.'); \
-"
+# Verify transformers and torch installation
+RUN python -c "import torch; print(f'PyTorch version: {torch.__version__}'); \
+    import transformers; print(f'Transformers version: {transformers.__version__}'); \
+    print('Hebrew Transformers stack ready!')"
 
 # Copy application code
 COPY . .
