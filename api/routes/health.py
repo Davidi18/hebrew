@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from loguru import logger
 
 from config.settings import settings
-from models.hebrew_loader import hebrew_loader
+from models.hebspacy_loader import hebrew_loader
 from schemas.responses import HealthResponse
 
 router = APIRouter()
@@ -26,7 +26,7 @@ async def health_check():
     """
     try:
         # Get model status
-        model_info = await hebrew_loader.get_model()
+        model_info = await hebrew_loader.get_model_info()
         model_status = {
             "loaded": True,
             "model_name": model_info.get('model_name', 'unknown'),
@@ -70,17 +70,10 @@ async def readiness_check():
     """
     try:
         # Check if Hebrew Transformers model is loaded
-        try:
-            model_components = await hebrew_loader.get_model()
-            if not model_components.get('tokenizer') or not model_components.get('model'):
-                raise HTTPException(
-                    status_code=503,
-                    detail="Hebrew Transformers model not loaded"
-                )
-        except Exception as e:
+        if not hebrew_loader.is_loaded():
             raise HTTPException(
                 status_code=503,
-                detail=f"Hebrew Transformers model error: {str(e)}"
+                detail="Hebrew Transformers model not loaded"
             )
         
         # Test basic model functionality
