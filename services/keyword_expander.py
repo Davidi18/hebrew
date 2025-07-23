@@ -10,7 +10,7 @@ from collections import defaultdict, Counter
 from loguru import logger
 import re
 
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 
 
 class HebrewKeywordExpander:
@@ -118,7 +118,7 @@ class HebrewKeywordExpander:
         """Expand a single Hebrew keyword with all variation types."""
         
         # Get morphological analysis
-        analysis = await hebspacy_loader.analyze_text(keyword)
+        analysis = await hebrew_loader.analyze_text(keyword)
         token_info = analysis['tokens'][0] if analysis['tokens'] else {}
         
         # Generate different types of variations
