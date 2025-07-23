@@ -13,7 +13,7 @@ from httpx import AsyncClient
 # Import the main app
 from app import app
 from config.settings import settings
-from models.hebrew_loader import hebrew_loader
+from models.hebspacy_loader import hebrew_loader
 from services.hebrew_analyzer import hebrew_analyzer
 from services.semantic_clusters import clustering_service
 from services.keyword_expander import keyword_expander
