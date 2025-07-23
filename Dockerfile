@@ -12,6 +12,7 @@ RUN apt-get update && apt-get install -y \
     cmake \
     make \
     build-essential \
+    libssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Install Rust (required for tokenizers)
