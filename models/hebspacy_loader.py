@@ -24,12 +24,12 @@ from app.core.config import settings
 logger = logging.getLogger(__name__)
 
 class HebrewTransformersLoader:
-    """Advanced Hebrew NLP loader using Transformers (heBERT, AlephBERT) for superior language understanding."""
+    """Lightweight Hebrew NLP loader using heBERT for efficient Hebrew language understanding."""
     
     def __init__(self):
         self._model_name = "avichr/heBERT"  # Primary Hebrew BERT model
         self._ner_model_name = "avichr/heBERT_NER"  # Hebrew NER model
-        self._aleph_model_name = "onlplab/alephbert-base"  # Alternative Hebrew BERT
+        # Removed AlephBERT to reduce resource usage
         self._cache_dir = Path(settings.hebspacy_cache_dir)
         self._is_loading = False
         self._load_lock = asyncio.Lock()
@@ -246,7 +246,7 @@ class HebrewTransformersLoader:
             return {
                 "loaded": True,
                 "model_name": model_components.get('model_name', 'unknown'),
-                "type": "Hebrew Transformers (heBERT/AlephBERT)",
+                "type": "Hebrew Transformers (heBERT)",
                 "capabilities": model_components.get('capabilities', []),
                 "lang": "he",
                 "pipeline": ["tokenizer", "ner", "embeddings"],
@@ -259,7 +259,7 @@ class HebrewTransformersLoader:
                 "loaded": False,
                 "error": str(e),
                 "model_name": "unknown",
-                "type": "Hebrew Transformers (heBERT/AlephBERT)"
+                "type": "Hebrew Transformers (heBERT)"
             }
 
 # Global instance
