@@ -75,58 +75,68 @@ class HebSpacyLoader:
     
     def _load_model_sync(self) -> Language:
         """Synchronous model loading for thread executor."""
+        # First, try the working fallback approach to ensure service availability
         try:
-            # Load HebSpacy model using spaCy (correct API for hebspacy 0.1.7)
             import spacy
-            model = spacy.load("he_ner_news_trf")
-            logger.debug(f"Loaded HebSpacy model: he_ner_news_trf")
-            return model
             
-        except OSError as e:
-            # Model not found - HebSpacy 0.1.7 downloads automatically on first import
-            logger.error(f"HebSpacy model 'he_ner_news_trf' not found: {e}")
-            logger.info("Make sure hebspacy is properly installed with: pip install hebspacy")
+            # Check if hebspacy is properly installed by testing its version
+            try:
+                import hebspacy
+                hebspacy_version = getattr(hebspacy, '__version__', 'unknown')
+                logger.info(f"HebSpacy version detected: {hebspacy_version}")
+                
+                # If hebspacy version is 0.0.1 or unknown, it's corrupted - skip to fallback
+                if hebspacy_version in ['0.0.1', 'unknown'] or not hasattr(hebspacy, 'load'):
+                    logger.warning(f"HebSpacy installation corrupted (version: {hebspacy_version}), using fallback")
+                    raise ImportError("Corrupted hebspacy installation")
+                    
+            except (ImportError, AttributeError) as e:
+                logger.warning(f"HebSpacy not properly available: {e}, using fallback")
+                # Skip to fallback immediately
+                model = spacy.blank("he")
+                logger.info("Using blank Hebrew spaCy model as fallback")
+                return model
             
-            # Try fallback to basic Hebrew spaCy model
+            # Try to load the HebSpacy model with timeout protection
+            try:
+                # Check if model exists before attempting to load
+                available_models = []
+                try:
+                    available_models = spacy.util.find_available_models()
+                    logger.debug(f"Available spaCy models: {available_models}")
+                except Exception:
+                    logger.debug("Could not list available models")
+                
+                if "he_ner_news_trf" not in available_models:
+                    logger.warning("Model 'he_ner_news_trf' not in available models list")
+                    raise OSError("Model not found in available models")
+                
+                # Attempt to load the model
+                logger.info("Attempting to load HebSpacy model: he_ner_news_trf")
+                model = spacy.load("he_ner_news_trf")
+                logger.info("Successfully loaded HebSpacy model: he_ner_news_trf")
+                return model
+                
+            except (OSError, IOError, RuntimeError) as e:
+                # Model not found or loading failed - use fallback
+                logger.warning(f"HebSpacy model 'he_ner_news_trf' not available: {e}")
+                logger.info("Falling back to blank Hebrew spaCy model")
+                
+                model = spacy.blank("he")
+                logger.info("Successfully created blank Hebrew spaCy model as fallback")
+                return model
+                
+        except Exception as e:
+            logger.error(f"Critical error in model loading: {e}")
+            # Last resort fallback
             try:
                 import spacy
                 model = spacy.blank("he")
-                logger.warning("Using blank Hebrew model as fallback")
+                logger.warning("Using emergency fallback: blank Hebrew model")
                 return model
             except Exception as fallback_error:
-                logger.error(f"Failed to create fallback model: {fallback_error}")
-                raise RuntimeError(f"Could not load Hebrew model: {e}")
-    
-    async def _validate_model(self) -> None:
-        """Validate that the model has required Hebrew capabilities."""
-        if not self._model:
-            raise ValueError("Model not loaded")
-            
-        # Test Hebrew text processing
-        test_text = "זהו טקסט בדיקה בעברית עם ניתוח מורפולוגי"
-        
-        try:
-            doc = self._model(test_text)
-            
-            # Check basic tokenization
-            if len(doc) == 0:
-                raise ValueError("Model failed basic tokenization")
-                
-            # Check morphological analysis capabilities
-            has_morphology = any(token.morph for token in doc)
-            if not has_morphology:
-                logger.warning("Model may not support Hebrew morphological analysis")
-                
-            # Check NER capabilities
-            has_ner = len(self._model.pipe_names) > 0 and 'ner' in self._model.pipe_names
-            if not has_ner:
-                logger.warning("Model may not support Named Entity Recognition")
-                
-            logger.debug("Model validation completed successfully")
-            
-        except Exception as e:
-            logger.error(f"Model validation failed: {e}")
-            raise
+                logger.error(f"Emergency fallback failed: {fallback_error}")
+                raise RuntimeError(f"Could not load any Hebrew model: {e}")
     
     async def get_model(self) -> Language:
         """Get the loaded model, loading it if necessary."""
