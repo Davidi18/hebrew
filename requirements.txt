@@ -4,9 +4,12 @@ pydantic==1.8.2
 uvicorn==0.18.3
 typing-extensions==4.5.0
 
-# Hebrew NLP - COMPATIBLE WITH HEBSPACY 0.1.7
-spacy==3.2.2
-hebspacy==0.1.7
+# Hebrew NLP - Using Transformers with heBERT/AlephBERT for superior Hebrew understanding
+spacy==3.2.2  # Keep for fallback tokenization
+# hebspacy==0.1.7  # Removed due to persistent package corruption issues
+transformers>=4.20.0
+torch>=1.12.0
+sentencepiece>=0.1.96
 nltk==3.8.1
 
 # DataForSEO and HTTP
