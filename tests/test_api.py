@@ -28,7 +28,7 @@ class TestHealthEndpoints:
     
     async def test_readiness_check(self, async_client: AsyncClient):
         """Test readiness check."""
-        with patch("models.hebspacy_loader.hebspacy_loader.get_model_info") as mock_info:
+        with patch("models.hebrew_loader.hebrew_loader.get_model_info") as mock_info:
             mock_info.return_value = {"model_loaded": True, "model_name": "he_core_news_lg"}
             
             response = await async_client.get("/health/ready")
