@@ -4,7 +4,7 @@ Pydantic models for validating incoming requests.
 """
 
 from typing import Optional, List, Dict, Any
-from pydantic import BaseModel, Field, validator
+from pydantic import BaseModel, Field, field_validator
 
 
 class AnalysisOptions(BaseModel):
@@ -24,7 +24,8 @@ class ContentAnalysisRequest(BaseModel):
     url: Optional[str] = Field(default=None, description="Optional source URL")
     options: Optional[AnalysisOptions] = Field(default_factory=AnalysisOptions, description="Analysis options")
     
-    @validator('text')
+    @field_validator('text')
+    @classmethod
     def validate_text(cls, v):
         if not v or not v.strip():
             raise ValueError('Text cannot be empty')
@@ -36,7 +37,8 @@ class ClusterGenerationRequest(BaseModel):
     keywords: List[str] = Field(..., min_items=1, max_items=100, description="Keywords to cluster")
     options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Clustering options")
     
-    @validator('keywords')
+    @field_validator('keywords')
+    @classmethod
     def validate_keywords(cls, v):
         if not v:
             raise ValueError('Keywords list cannot be empty')
@@ -52,7 +54,8 @@ class KeywordExpansionRequest(BaseModel):
     keywords: List[str] = Field(..., min_items=1, max_items=50, description="Keywords to expand")
     options: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Expansion options")
     
-    @validator('keywords')
+    @field_validator('keywords')
+    @classmethod
     def validate_keywords(cls, v):
         if not v:
             raise ValueError('Keywords list cannot be empty')
@@ -68,7 +71,8 @@ class BatchAnalysisRequest(BaseModel):
     texts: List[str] = Field(..., min_items=1, max_items=10, description="List of texts to analyze")
     options: Optional[AnalysisOptions] = Field(default_factory=AnalysisOptions, description="Analysis options")
     
-    @validator('texts')
+    @field_validator('texts')
+    @classmethod
     def validate_texts(cls, v):
         if not v:
             raise ValueError('Texts list cannot be empty')
@@ -91,7 +95,8 @@ class SearchVolumeRequest(BaseModel):
     location: Optional[str] = Field(default="Israel", description="Target location for search data")
     language: Optional[str] = Field(default="he", description="Target language")
     
-    @validator('keywords')
+    @field_validator('keywords')
+    @classmethod
     def validate_keywords(cls, v):
         if not v:
             raise ValueError('Keywords list cannot be empty')
