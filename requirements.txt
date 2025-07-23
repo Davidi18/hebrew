@@ -8,17 +8,17 @@ typing-extensions==4.5.0
 spacy==3.2.2  # Keep for fallback tokenization
 # hebspacy==0.1.7  # Removed due to persistent package corruption issues
 transformers>=4.20.0
-torch>=1.12.0
-sentencepiece>=0.1.96
+torch>=2.6.0
+sentencepiece>=0.1.95
 nltk==3.8.1
 
 # DataForSEO and HTTP
 httpx==0.24.1
-requests==2.31.0
+requests>=2.28.0
 
 # Data processing
 pandas==1.5.3
-numpy==1.24.4
+numpy>=1.21.0
 
 # Caching
 redis==4.6.0
@@ -30,12 +30,12 @@ python-dotenv==1.0.0
 psutil==5.9.6
 
 # Additional Hebrew processing
-scikit-learn==1.3.2
+scikit-learn>=1.1.0
 
 # Testing
 pytest==7.4.4
 pytest-asyncio==0.21.2
 
 # Utilities
-loguru==0.7.3
+loguru>=0.6.0
 PyYAML==6.0.2
