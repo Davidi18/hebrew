@@ -1,6 +1,6 @@
 """
 Hebrew Content Intelligence Service - Main FastAPI Application
-Advanced Hebrew content analysis with HebSpacy, semantic clustering, and DataForSEO integration.
+Advanced Hebrew content analysis with Hebrew Transformers, semantic clustering, and DataForSEO integration.
 """
 
 import asyncio
@@ -16,7 +16,7 @@ from loguru import logger
 import uvicorn
 
 from config.settings import settings
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 from utils.cache_manager import cache_manager
 from services.search_data_service import search_data_service
 from api.routes import analysis, clusters, keywords, health
@@ -35,10 +35,10 @@ async def startup_event():
         # Initialize search data service
         await search_data_service.initialize()
         
-        # Load HebSpacy model
-        logger.info("Loading HebSpacy model...")
-        await hebspacy_loader.load_model()
-        logger.success("HebSpacy model loaded successfully")
+        # Load Hebrew Transformers model
+        logger.info("Loading Hebrew Transformers models...")
+        await hebrew_loader.get_model()
+        logger.success("Hebrew Transformers models loaded successfully")
         
         # Store startup time
         app.state.startup_time = datetime.now()
@@ -67,7 +67,7 @@ async def shutdown_event():
 # Create FastAPI application
 app = FastAPI(
     title="Hebrew Content Intelligence Service",
-    description="Advanced Hebrew content analysis using HebSpacy, semantic clustering, and DataForSEO integration",
+    description="Advanced Hebrew content analysis using Hebrew Transformers, semantic clustering, and DataForSEO integration",
     version=settings.version,
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
@@ -116,7 +116,7 @@ async def root():
 @app.get("/info")
 async def service_info():
     """Detailed service information and model status."""
-    model_info = await hebspacy_loader.get_model_info()
+    model_info = await hebrew_loader.get_model_info()
     
     return {
         "service": {
