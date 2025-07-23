@@ -6,6 +6,7 @@ pydantic>=1.8.2,<1.9.0
 # Hebrew NLP - constrain to compatible versions
 hebspacy==0.1.7
 spacy==3.2.2
+tokenizers==0.13.3
 
 # HTTP & API
 httpx>=0.24.0,<0.26.0
