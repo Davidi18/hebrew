@@ -26,8 +26,8 @@ COPY requirements.txt .
 RUN pip install --no-cache-dir --upgrade pip
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Download HebSpacy models
-RUN python -c "import hebspacy; hebspacy.download('he')"
+# Download HebSpacy model
+RUN pip install --no-cache-dir https://github.com/8400TheHealthNetwork/HebSpacy/releases/download/he_ner_news_trf-3.2.1/he_ner_news_trf-3.2.1-py3-none-any.whl
 
 # Copy application code
 COPY . .
