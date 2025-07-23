@@ -1,11 +1,11 @@
-# Core web framework - OFFICIAL SPACY FIX (GitHub Issue #12659)
-fastapi==0.68.0
-pydantic==1.10.8
-uvicorn==0.15.0
+# Core web framework - PROVEN WORKING COMBINATION (from memory)
+fastapi==0.85.0
+pydantic==1.8.2
+uvicorn==0.18.3
 typing-extensions==4.5.0
 
-# Hebrew NLP - OFFICIAL SPACY FIX COMBINATION
-spacy==3.4.4
+# Hebrew NLP - COMPATIBLE WITH HEBSPACY 0.1.7
+spacy==3.2.2
 hebspacy==0.1.7
 nltk==3.8.1
 
