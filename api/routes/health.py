@@ -9,7 +9,7 @@ from fastapi import APIRouter, HTTPException
 from loguru import logger
 
 from config.settings import settings
-from models.hebspacy_loader import hebspacy_loader
+from models.hebrew_loader import hebrew_loader
 from schemas.responses import HealthResponse
 
 router = APIRouter()
@@ -26,21 +26,27 @@ async def health_check():
     """
     try:
         # Get model status
-        model_info = await hebspacy_loader.get_model_info()
+        model_info = await hebrew_loader.get_model()
+        model_status = {
+            "loaded": True,
+            "model_name": model_info.get('model_name', 'unknown'),
+            "capabilities": model_info.get('capabilities', []),
+            "type": "Hebrew Transformers"
+        }
         
         # Calculate uptime
         uptime_seconds = time.time() - SERVICE_START_TIME
         
         # Determine overall status
         status = "healthy"
-        if not model_info.get("loaded", False):
+        if not model_status.get("loaded", False):
             status = "degraded"
         
         return HealthResponse(
             status=status,
             timestamp=datetime.now(),
             version=settings.version,
-            model_status=model_info,
+            model_status=model_status,
             uptime_seconds=round(uptime_seconds, 2)
         )
         
@@ -63,15 +69,22 @@ async def readiness_check():
     Returns 200 if service is ready to handle requests.
     """
     try:
-        # Check if HebSpacy model is loaded
-        if not hebspacy_loader.is_loaded():
+        # Check if Hebrew Transformers model is loaded
+        try:
+            model_components = await hebrew_loader.get_model()
+            if not model_components.get('tokenizer') or not model_components.get('model'):
+                raise HTTPException(
+                    status_code=503,
+                    detail="Hebrew Transformers model not loaded"
+                )
+        except Exception as e:
             raise HTTPException(
                 status_code=503,
-                detail="HebSpacy model not loaded"
+                detail=f"Hebrew Transformers model error: {str(e)}"
             )
         
         # Test basic model functionality
-        test_result = await hebspacy_loader.analyze_text("בדיקה")
+        test_result = await hebrew_loader.analyze_text("בדיקה")
         if not test_result or not test_result.get("tokens"):
             raise HTTPException(
                 status_code=503,
