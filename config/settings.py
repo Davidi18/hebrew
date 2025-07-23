@@ -3,8 +3,9 @@ Configuration settings for Hebrew Content Intelligence Service.
 Uses Pydantic Settings for environment variable management.
 """
 
+import os
 from typing import Optional
-from pydantic import Field, BaseSettings
+from pydantic import BaseSettings, Field
 
 
 class Settings(BaseSettings):
