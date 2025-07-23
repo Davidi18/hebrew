@@ -24,6 +24,10 @@ COPY requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir --upgrade pip
+
+# Explicitly prevent Pydantic v2 installation
+RUN pip install --no-cache-dir "pydantic>=1.8.2,<2.0.0" --force-reinstall
+
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Download HebSpacy model
