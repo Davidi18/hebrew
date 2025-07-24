@@ -82,20 +82,20 @@ class SemanticClusteringService:
         if 'extracted_keywords' in analysis_results:
             for kw in analysis_results['extracted_keywords'].get('top_keywords', []):
                 candidates.append({
-                    'text': kw['keyword'],
+                    'text': kw.get('keyword', ''),
                     'type': 'keyword',
-                    'score': kw['score'],
+                    'score': kw.get('score', 0.0),
                     'source': 'keyword_extraction'
                 })
         
         # Add noun phrases
         if 'semantic_phrases' in analysis_results:
             for phrase in analysis_results['semantic_phrases'].get('noun_phrases', []):
-                if len(phrase['text'].split()) >= 2:  # Multi-word phrases
+                if len(phrase.get('text', '').split()) >= 2:  # Multi-word phrases
                     candidates.append({
-                        'text': phrase['text'],
+                        'text': phrase.get('text', ''),
                         'type': 'phrase',
-                        'score': phrase['length'] * 0.5,  # Length-based scoring
+                        'score': phrase.get('length', 0) * 0.5,  # Length-based scoring
                         'source': 'phrase_extraction'
                     })
         
@@ -110,7 +110,7 @@ class SemanticClusteringService:
                 })
         
         # Sort by score and return top candidates
-        candidates.sort(key=lambda x: x['score'], reverse=True)
+        candidates.sort(key=lambda x: x.get('score', 0.0), reverse=True)
         return candidates[:50]  # Limit for performance
     
     async def _cluster_by_roots(self, keywords: List[Dict], roots_data: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -124,10 +124,11 @@ class SemanticClusteringService:
                 
                 # Find keywords related to this root
                 for kw in keywords:
+                    kw_text = kw.get('text', kw.get('keyword', ''))
                     for root_word in root_info:
-                        if (root_word['lemma'] in kw['text'] or 
-                            kw['text'] in root_word['lemma'] or
-                            self._are_morphologically_related(kw['text'], root_word['lemma'])):
+                        if (root_word.get('lemma', '') in kw_text or 
+                            kw_text in root_word.get('lemma', '') or
+                            self._are_morphologically_related(kw_text, root_word.get('lemma', ''))):
                             cluster_keywords.append(kw)
                             break
                 
@@ -161,7 +162,8 @@ class SemanticClusteringService:
                 theme_keywords = []
                 
                 for kw in keywords:
-                    if any(pattern in kw['text'] for pattern in patterns):
+                    kw_text = kw.get('text', kw.get('keyword', ''))
+                    if any(pattern in kw_text for pattern in patterns):
                         theme_keywords.append(kw)
                 
                 if len(theme_keywords) >= 2:
@@ -181,7 +183,7 @@ class SemanticClusteringService:
             return []
         
         # Prepare text data
-        texts = [kw['text'] for kw in keywords]
+        texts = [kw.get('text', kw.get('keyword', '')) for kw in keywords]
         
         try:
             # Create TF-IDF vectors
@@ -218,7 +220,7 @@ class SemanticClusteringService:
             for cluster_id, cluster_keywords in clusters.items():
                 if len(cluster_keywords) >= 2:
                     # Find most representative keyword as cluster name
-                    cluster_name = max(cluster_keywords, key=lambda x: x['score'])['text']
+                    cluster_name = max(cluster_keywords, key=lambda x: x.get('score', 0.0))['text']
                     
                     result_clusters.append({
                         'cluster_name': f"דמיון_{cluster_name}",
@@ -251,7 +253,7 @@ class SemanticClusteringService:
         
         # Group keywords by POS
         for kw in keywords:
-            kw_text = kw.get('keyword', kw.get('text', str(kw) if isinstance(kw, str) else ''))
+            kw_text = kw.get('text', kw.get('keyword', ''))
             pos = pos_mapping.get(kw_text, 'UNKNOWN')
             if pos in ['NOUN', 'ADJ', 'VERB']:
                 clusters[pos].append(kw)
@@ -286,15 +288,16 @@ class SemanticClusteringService:
         optimized_clusters = []
         
         # Sort clusters by coherence score
-        all_clusters.sort(key=lambda x: x['coherence_score'], reverse=True)
+        all_clusters.sort(key=lambda x: x.get('coherence_score', 0.0), reverse=True)
         
         for cluster in all_clusters:
             # Filter out already seen keywords
             unique_keywords = []
             for kw in cluster['keywords']:
-                if kw.get('keyword', kw.get('text', '')) not in seen_keywords:
+                kw_text = kw.get('text', kw.get('keyword', ''))
+                if kw_text not in seen_keywords:
                     unique_keywords.append(kw)
-                    seen_keywords.add(kw.get('keyword', kw.get('text', '')))
+                    seen_keywords.add(kw_text)
             
             # Keep cluster if it still has enough keywords
             if len(unique_keywords) >= 2:
@@ -345,7 +348,7 @@ class SemanticClusteringService:
             return 0.0
             
         # Higher score for more keywords and higher individual scores
-        avg_score = np.mean([kw['score'] for kw in keywords])
+        avg_score = np.mean([kw.get('score', 0.0) for kw in keywords])
         size_bonus = min(len(keywords) / 5, 1.0)
         
         return (avg_score + size_bonus) / 2
@@ -375,8 +378,8 @@ class SemanticClusteringService:
         
         for i in range(len(keywords)):
             for j in range(i + 1, len(keywords)):
-                word1 = keywords[i].get('keyword', keywords[i].get('text', ''))
-                word2 = keywords[j].get('keyword', keywords[j].get('text', ''))
+                word1 = keywords[i].get('text', keywords[i].get('keyword', ''))
+                word2 = keywords[j].get('text', keywords[j].get('keyword', ''))
                 similarities.append(self._are_morphologically_related(word1, word2))
         
         return np.mean(similarities) if similarities else 0.0
