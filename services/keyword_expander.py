@@ -119,7 +119,28 @@ class HebrewKeywordExpander:
         
         # Get morphological analysis
         analysis = await hebrew_loader.analyze_text(keyword)
-        token_info = analysis['tokens'][0] if analysis['tokens'] else {}
+        
+        # Get token info safely with fallback
+        tokens = analysis.get('tokens', [])
+        if tokens and isinstance(tokens[0], dict):
+            # Tokens are in correct Dict format
+            token_info = tokens[0]
+        elif tokens and isinstance(tokens[0], str):
+            # Tokens are in string format, create dict structure
+            token_info = {
+                'text': tokens[0],
+                'lemma': tokens[0].lower(),
+                'pos': 'UNKNOWN',
+                'is_hebrew': any('\u0590' <= char <= '\u05FF' for char in tokens[0])
+            }
+        else:
+            # No tokens available, create fallback
+            token_info = {
+                'text': keyword,
+                'lemma': keyword.lower(),
+                'pos': 'UNKNOWN',
+                'is_hebrew': any('\u0590' <= char <= '\u05FF' for char in keyword)
+            }
         
         # Generate different types of variations
         expansion_tasks = [
