@@ -68,16 +68,29 @@ class HebrewSemanticAnalyzer:
         # Get basic Hebrew Transformers analysis
         basic_analysis = await hebrew_loader.analyze_text(text)
         
-        # Perform advanced analysis
-        analysis_tasks = [
-            self._extract_hebrew_roots(basic_analysis['tokens']),
-            self._extract_semantic_phrases(basic_analysis['tokens']),
-            self._analyze_morphology(basic_analysis['tokens']),
-            self._extract_keywords(basic_analysis['tokens']),
-            self._analyze_content_themes(basic_analysis['tokens'])
-        ]
+        # Get tokens safely with fallback
+        tokens = basic_analysis.get('tokens', [])
         
-        results = await asyncio.gather(*analysis_tasks)
+        # Perform advanced analysis only if we have tokens
+        if tokens:
+            analysis_tasks = [
+                self._extract_hebrew_roots(tokens),
+                self._extract_semantic_phrases(tokens),
+                self._analyze_morphology(tokens),
+                self._extract_keywords(tokens),
+                self._analyze_content_themes(tokens)
+            ]
+            
+            results = await asyncio.gather(*analysis_tasks)
+        else:
+            # Fallback results if no tokens available
+            results = [
+                {'roots': [], 'root_frequency': {}},
+                {'phrases': []},
+                {'morphology': {}},
+                {'keywords': []},
+                {'themes': []}
+            ]
         
         return {
             **basic_analysis,
@@ -89,7 +102,7 @@ class HebrewSemanticAnalyzer:
             'analysis_metadata': {
                 'processing_time_ms': 0,  # Will be calculated by caller
                 'hebrew_ratio': basic_analysis.get('language_stats', {}).get('hebrew_ratio', 0.0),
-                'complexity_score': self._calculate_complexity_score(basic_analysis.get('tokens', []))
+                'complexity_score': self._calculate_complexity_score(tokens)
             }
         }
     
