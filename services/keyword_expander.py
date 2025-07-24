@@ -115,19 +115,82 @@ class HebrewKeywordExpander:
             }
         }
     
-    async def _expand_single_keyword(self, keyword: str, options: Dict[str, Any]) -> Dict[str, Any]:
-        """Expand a single Hebrew keyword with all variation types."""
+    async def _expand_single_keyword(self, keyword: str, options: Dict[str, Any] = None) -> Dict[str, Any]:
+        """Expand a single keyword with strict limits and filtering."""
+        if not keyword or not keyword.strip():
+            return {'morphological': [], 'semantic': [], 'commercial': [], 'locational': [], 'question': [], 'all_variations': []}
         
-        # Get morphological analysis
+        options = options or {}
+        
+        # Generate all variation types with limits
+        morphological_task = self._generate_morphological_variations(keyword, options)
+        semantic_task = self._generate_semantic_variations(keyword, options)
+        commercial_task = self._generate_commercial_variations(keyword, options)
+        locational_task = self._generate_locational_variations(keyword, options)
+        question_task = self._generate_question_variations(keyword, options)
+        
+        # Execute all tasks concurrently
+        results = await asyncio.gather(
+            morphological_task,
+            semantic_task,
+            commercial_task,
+            locational_task,
+            question_task,
+            return_exceptions=True
+        )
+        
+        # Handle any exceptions
+        morphological = results[0] if not isinstance(results[0], Exception) else []
+        semantic = results[1] if not isinstance(results[1], Exception) else []
+        commercial = results[2] if not isinstance(results[2], Exception) else []
+        locational = results[3] if not isinstance(results[3], Exception) else []
+        question = results[4] if not isinstance(results[4], Exception) else []
+        
+        # Apply strict limits per category
+        morphological = morphological[:6]  # Max 6 morphological
+        semantic = semantic[:4]            # Max 4 semantic
+        commercial = commercial[:12]       # Max 12 commercial
+        locational = locational[:8]        # Max 8 locational
+        question = question[:3]            # Max 3 questions
+        
+        # Combine all variations with final filtering
+        all_variations = []
+        all_variations.extend(morphological)
+        all_variations.extend(semantic)
+        all_variations.extend(commercial)
+        all_variations.extend(locational)
+        all_variations.extend(question)
+        
+        # Remove duplicates and apply final relevance filtering
+        unique_variations = []
+        seen = set()
+        for variation in all_variations:
+            if variation not in seen and variation != keyword:
+                score = self._calculate_relevance_score(keyword, variation)
+                if score > 0.3:  # Final relevance threshold
+                    unique_variations.append(variation)
+                    seen.add(variation)
+        
+        # Absolute maximum of 25 variations per keyword
+        final_variations = unique_variations[:25]
+        
+        return {
+            'morphological': morphological,
+            'semantic': semantic,
+            'commercial': commercial,
+            'locational': locational,
+            'question': question,
+            'all_variations': final_variations
+        }
+    
+    async def _generate_morphological_variations(self, keyword: str, options: Dict[str, Any] = None) -> List[str]:
+        """Generate morphological variations based on Hebrew grammar."""
+        variations = []
         analysis = await hebrew_loader.analyze_text(keyword)
-        
-        # Get token info safely with fallback
         tokens = analysis.get('tokens', [])
         if tokens and len(tokens) > 0 and isinstance(tokens[0], dict):
-            # Tokens are in correct Dict format
             token_info = tokens[0]
         elif tokens and len(tokens) > 0 and isinstance(tokens[0], str):
-            # Tokens are in string format, create dict structure
             token_info = {
                 'text': tokens[0],
                 'lemma': tokens[0].lower(),
@@ -135,7 +198,6 @@ class HebrewKeywordExpander:
                 'is_hebrew': any('\u0590' <= char <= '\u05FF' for char in tokens[0])
             }
         else:
-            # No tokens available, create fallback
             token_info = {
                 'text': keyword,
                 'lemma': keyword.lower(),
@@ -143,64 +205,19 @@ class HebrewKeywordExpander:
                 'is_hebrew': any('\u0590' <= char <= '\u05FF' for char in keyword)
             }
         
-        # Generate different types of variations
-        expansion_tasks = [
-            self._generate_morphological_variations(keyword, token_info),
-            self._generate_semantic_variations(keyword),
-            self._generate_commercial_variations(keyword),
-            self._generate_locational_variations(keyword),
-            self._generate_question_variations(keyword)
-        ]
-        
-        results = await asyncio.gather(*expansion_tasks)
-        
-        # Combine all variations
-        all_variations = set([keyword])  # Include original
-        variation_types = {}
-        
-        for i, (var_type, variations) in enumerate([
-            ('morphological', results[0]),
-            ('semantic', results[1]),
-            ('commercial', results[2]),
-            ('locational', results[3]),
-            ('question', results[4])
-        ]):
-            variation_types[var_type] = variations
-            all_variations.update(variations)
-        
-        return {
-            'original': keyword,
-            'morphological_info': {
-                'lemma': token_info.get('lemma', keyword),
-                'pos': token_info.get('pos', 'UNKNOWN'),
-                'morph': token_info.get('morph', '')
-            },
-            'variations_by_type': variation_types,
-            'all_variations': list(all_variations),
-            'expansion_score': self._calculate_expansion_score(keyword, all_variations)
-        }
-    
-    async def _generate_morphological_variations(self, keyword: str, token_info: Dict) -> List[str]:
-        """Generate morphological variations based on Hebrew grammar."""
-        variations = []
         pos = token_info.get('pos', 'UNKNOWN')
         lemma = token_info.get('lemma', keyword)
         
         if pos == 'NOUN':
-            # Generate noun variations
             variations.extend(self._generate_noun_variations(lemma))
         elif pos == 'VERB':
-            # Generate verb variations
             variations.extend(self._generate_verb_variations(lemma))
         elif pos == 'ADJ':
-            # Generate adjective variations
             variations.extend(self._generate_adjective_variations(lemma))
         
-        # Add definite article variations
         if not keyword.startswith('ה'):
             variations.append('ה' + keyword)
         
-        # Add preposition combinations
         for prep in ['ב', 'ל', 'של', 'עם', 'על']:
             variations.append(f"{prep} {keyword}")
             variations.append(f"{keyword} {prep}")
@@ -211,24 +228,20 @@ class HebrewKeywordExpander:
         """Generate Hebrew noun variations."""
         variations = []
         
-        # Plural forms
         if not noun.endswith('ים') and not noun.endswith('ות'):
             variations.extend([
                 noun + 'ים',  # Masculine plural
                 noun + 'ות',  # Feminine plural
             ])
         
-        # Construct state
         if noun.endswith('ה'):
             variations.append(noun[:-1] + 'ת')  # Feminine construct
         else:
             variations.append(noun + 'י')  # Masculine construct
         
-        # Possessive forms
         for suffix in ['ו', 'ה', 'ם', 'ן', 'נו', 'כם']:
             variations.append(noun + suffix)
         
-        # Diminutive forms
         if len(noun) >= 3:
             variations.append(noun + 'ון')  # Diminutive
             variations.append(noun + 'ית')  # Feminine diminutive
@@ -239,37 +252,30 @@ class HebrewKeywordExpander:
         """Generate Hebrew verb variations."""
         variations = []
         
-        # Extract root (simplified)
         root = self._extract_verb_root(verb)
         if not root:
             return variations
         
-        # Generate different tenses and forms
         patterns = [
-            # Present tense patterns
             f"{root[0]}{root[1]}{root[2]}",
             f"{root[0]}ו{root[1]}{root[2]}",
             f"{root[0]}{root[1]}{root[2]}ת",
             f"{root[0]}{root[1]}{root[2]}ים",
             f"{root[0]}{root[1]}{root[2]}ות",
             
-            # Past tense patterns
             f"{root[0]}{root[1]}{root[2]}תי",
             f"{root[0]}{root[1]}{root[2]}ת",
             f"{root[0]}{root[1]}{root[2]}ה",
             f"{root[0]}{root[1]}{root[2]}נו",
             f"{root[0]}{root[1]}{root[2]}ו",
             
-            # Future tense patterns
             f"א{root[0]}{root[1]}{root[2]}",
             f"ת{root[0]}{root[1]}{root[2]}",
             f"י{root[0]}{root[1]}{root[2]}",
             f"נ{root[0]}{root[1]}{root[2]}",
             
-            # Infinitive
             f"ל{root[0]}{root[1]}{root[2]}",
             
-            # Participles
             f"מ{root[0]}{root[1]}{root[2]}",
             f"מ{root[0]}{root[1]}{root[2]}ת",
             f"מ{root[0]}{root[1]}{root[2]}ים",
@@ -283,9 +289,7 @@ class HebrewKeywordExpander:
         """Generate Hebrew adjective variations."""
         variations = []
         
-        # Gender and number variations
         if adjective.endswith('ה'):
-            # Feminine adjective
             base = adjective[:-1]
             variations.extend([
                 base,  # Masculine
@@ -293,15 +297,12 @@ class HebrewKeywordExpander:
                 adjective + 'ות'  # Feminine plural (rare but possible)
             ])
         else:
-            # Masculine adjective
             variations.extend([
                 adjective + 'ה',  # Feminine
                 adjective + 'ים',  # Masculine plural
                 adjective + 'ות'  # Feminine plural
             ])
         
-        # Comparative and superlative (Hebrew doesn't have morphological forms,
-        # but we can add common constructions)
         variations.extend([
             f"יותר {adjective}",  # More [adjective]
             f"הכי {adjective}",   # Most [adjective]
@@ -310,85 +311,89 @@ class HebrewKeywordExpander:
         
         return variations
     
-    async def _generate_semantic_variations(self, keyword: str) -> List[str]:
+    async def _generate_semantic_variations(self, keyword: str, options: Dict[str, Any] = None) -> List[str]:
         """Generate semantic variations with improved relevance filtering."""
         variations = []
         
-        # Check synonyms with exact matching
         for word, synonyms in self.semantic_relations['synonyms'].items():
             if word == keyword:  # Exact match only
                 variations.extend(synonyms[:3])  # Limit to top 3 synonyms
                 break
         
-        # Check related terms with stricter matching
         for word, related in self.semantic_relations['related_terms'].items():
             if word == keyword:  # Exact match only, not substring
-                # Add only most relevant related terms
                 variations.extend(related[:2])  # Limit to top 2 related terms
-                # Add selective combinations
                 for term in related[:2]:
                     variations.append(f"{keyword} {term}")
                 break
         
         return list(set(variations))[:self.max_variations_per_type]
     
-    async def _generate_commercial_variations(self, keyword: str) -> List[str]:
-        """Generate commercial intent variations."""
+    async def _generate_commercial_variations(self, keyword: str, options: Dict[str, Any] = None) -> List[str]:
+        """Generate context-aware commercial variations with strict limits."""
+        if not options.get('include_commercial', True):
+            return []
+        
+        keyword_type = self._classify_keyword_type(keyword)
+        
+        if keyword_type == 'product':
+            commercial_terms = ['מחיר', 'קנייה', 'מבצע', 'הנחה', 'זול']
+        elif keyword_type == 'service':
+            commercial_terms = ['עלות', 'שירות', 'מקצועי', 'איכותי', 'מומלץ']
+        else:
+            commercial_terms = ['מחיר', 'עלות', 'זול']  # Only 3 for general terms
+        
         variations = []
-        
-        # Add commercial modifiers
-        commercial_modifiers = [
-            'מחיר', 'עלות', 'זול', 'יקר', 'הנחה', 'מבצע', 'קנייה', 'רכישה',
-            'מכירה', 'חנות', 'אונליין', 'באינטרנט', 'משלוח', 'מהיר', 'איכותי',
-            'מקצועי', 'מומחה', 'שירות', 'טוב ביותר', 'מומלץ', 'ביקורות'
-        ]
-        
-        for modifier in commercial_modifiers:
+        for term in commercial_terms:
             variations.extend([
-                f"{keyword} {modifier}",
-                f"{modifier} {keyword}",
-                f"{modifier} ל{keyword}",
-                f"{keyword} ב{modifier}"
+                f"{keyword} {term}",
+                f"{term} {keyword}",
+                f"{term} ל{keyword}"
             ])
         
-        # Add question words for commercial intent
-        question_words = ['איך', 'איפה', 'מה', 'כמה', 'מתי', 'למה']
-        for q_word in question_words:
-            variations.extend([
-                f"{q_word} {keyword}",
-                f"{q_word} לקנות {keyword}",
-                f"{q_word} למצוא {keyword}"
-            ])
+        filtered_variations = []
+        for variation in variations:
+            score = self._calculate_relevance_score(keyword, variation)
+            if score > 0.4:  # Higher threshold for commercial
+                filtered_variations.append(variation)
         
-        return variations
+        return filtered_variations[:12]
     
-    async def _generate_locational_variations(self, keyword: str) -> List[str]:
-        """Generate location-based variations."""
+    async def _generate_locational_variations(self, keyword: str, options: Dict[str, Any] = None) -> List[str]:
+        """Generate selective locational variations only for relevant keywords."""
+        if not options.get('include_locational', False):  # Default OFF
+            return []
+        
+        if not self._is_location_relevant(keyword):
+            return []
+        
+        major_cities = ['תל אביב', 'ירושלים', 'חיפה', 'באר שבע']
+        
         variations = []
-        
-        # Israeli cities and regions
-        locations = [
-            'תל אביב', 'ירושלים', 'חיפה', 'באר שבע', 'נתניה', 'פתח תקווה',
-            'אשדוד', 'ראשון לציון', 'אשקלון', 'רמת גן', 'בני ברק', 'הרצליה',
-            'כפר סבא', 'רעננה', 'מודיעין', 'רחובות', 'גוש דן', 'השרון',
-            'הגליל', 'הנגב', 'יהודה ושומרון', 'ישראל'
-        ]
-        
-        for location in locations:
+        for city in major_cities:
             variations.extend([
-                f"{keyword} {location}",
-                f"{keyword} ב{location}",
-                f"{location} {keyword}",
-                f"{keyword} באזור {location}",
-                f"{keyword} קרוב ל{location}"
+                f"{keyword} {city}",
+                f"{keyword} ב{city}"
             ])
         
-        # Add general location terms
-        location_terms = ['קרוב', 'באזור', 'בסביבה', 'מקומי', 'אזורי']
-        for term in location_terms:
-            variations.append(f"{keyword} {term}")
+        filtered_variations = []
+        for variation in variations:
+            score = self._calculate_relevance_score(keyword, variation)
+            if score > 0.3:
+                filtered_variations.append(variation)
         
-        return variations
+        return filtered_variations[:8]  # Maximum 8 locational variations
+    
+    def _is_location_relevant(self, keyword: str) -> bool:
+        """Check if keyword is relevant for location-based variations."""
+        location_indicators = [
+            'שירות', 'חנות', 'מסעדה', 'בית קפה', 'רופא', 'עורך דין', 'מוסך',
+            'ספר', 'מלון', 'צימר', 'אירוע', 'חתונה', 'קורס', 'לימודים',
+            'עבודה', 'משרד', 'קליניקה', 'מרפאה', 'בנק', 'ביטוח'
+        ]
+        
+        keyword_lower = keyword.lower()
+        return any(indicator in keyword_lower for indicator in location_indicators)
     
     async def _generate_question_variations(self, keyword: str) -> List[str]:
         """Generate question-based variations."""
@@ -414,53 +419,57 @@ class HebrewKeywordExpander:
         variations.extend(question_patterns)
         return variations
     
-    def _generate_combined_variations(self, expanded_results: Dict[str, Any], options: Dict[str, Any]) -> List[str]:
-        """Generate combined keyword variations from multiple base keywords."""
-        combined = []
+    async def _generate_combined_variations(self, expanded_results: Dict[str, Dict], options: Dict[str, Any] = None) -> List[str]:
+        """Generate highly selective combined variations."""
+        if len(expanded_results) < 2:
+            return []
+        
+        options = options or {}
+        max_combinations = options.get('max_combinations', 8)  # Reduced from unlimited
         
         keywords = list(expanded_results.keys())
+        combined_variations = []
         
-        # Generate 2-word combinations
-        for i in range(len(keywords)):
-            for j in range(i + 1, len(keywords)):
-                kw1, kw2 = keywords[i], keywords[j]
-                combined.extend([
-                    f"{kw1} {kw2}",
-                    f"{kw2} {kw1}",
-                    f"{kw1} ו{kw2}",
-                    f"{kw1} עם {kw2}",
-                    f"{kw1} ל{kw2}",
-                    f"{kw2} ל{kw1}"
-                ])
+        # Only combine original keywords, not their variations
+        for i, keyword1 in enumerate(keywords):
+            for keyword2 in keywords[i+1:]:
+                # Simple combinations only
+                combinations = [
+                    f"{keyword1} {keyword2}",
+                    f"{keyword2} {keyword1}",
+                    f"{keyword1} ו{keyword2}",
+                    f"{keyword1} עם {keyword2}"
+                ]
+                
+                # Filter by relevance
+                for combo in combinations:
+                    if len(combo.split()) <= 4:  # Limit length
+                        combined_variations.append(combo)
+                
+                if len(combined_variations) >= max_combinations:
+                    break
+            
+            if len(combined_variations) >= max_combinations:
+                break
         
-        # Add variations with common connecting words
-        connectors = ['של', 'עם', 'ב', 'ל', 'על', 'תחת', 'ליד', 'בתוך']
-        for i in range(len(keywords)):
-            for j in range(i + 1, len(keywords)):
-                for connector in connectors:
-                    combined.append(f"{keywords[i]} {connector} {keywords[j]}")
-        
-        return list(set(combined))[:100]  # Limit results
+        return combined_variations[:max_combinations]
     
     def _extract_verb_root(self, verb: str) -> Optional[str]:
         """Extract Hebrew verb root (simplified approach)."""
         if len(verb) < 3:
             return None
             
-        # Remove common prefixes
         cleaned = verb
         for prefix in self.common_prefixes:
             if cleaned.startswith(prefix) and len(cleaned) > len(prefix) + 2:
                 cleaned = cleaned[len(prefix):]
                 break
         
-        # Remove common suffixes
         for suffix in self.common_suffixes:
             if cleaned.endswith(suffix) and len(cleaned) > len(suffix) + 2:
                 cleaned = cleaned[:-len(suffix)]
                 break
         
-        # Return first 3 characters as potential root
         if len(cleaned) >= 3:
             return cleaned[:3]
         
@@ -471,11 +480,9 @@ class HebrewKeywordExpander:
         if not variations:
             return 0.0
             
-        # Factors: number of variations, diversity, relevance
         variation_count = len(variations)
         diversity_score = min(variation_count / 20, 1.0)  # Normalize to 0-1
         
-        # Quality score based on variation types
         quality_indicators = 0
         for variation in variations:
             if original in variation or variation in original:
@@ -488,6 +495,28 @@ class HebrewKeywordExpander:
         quality_score = min(quality_indicators, 1.0)
         
         return round((diversity_score + quality_score) / 2, 3)
+    
+    def _calculate_relevance_score(self, original: str, variation: str) -> float:
+        """Calculate relevance score with much stricter filtering."""
+        if not variation or not original:
+            return 0.0
+        
+        original_words = set(original.split())
+        variation_words = set(variation.split())
+        
+        intersection = len(original_words.intersection(variation_words))
+        union = len(original_words.union(variation_words))
+        jaccard = intersection / union if union > 0 else 0.0
+        
+        length_penalty = max(0, 1 - (len(variation.split()) - len(original.split())) / 5)
+        
+        connectors = ['ב', 'ל', 'של', 'עם', 'על', 'את', 'ה', 'ו']
+        connector_count = sum(1 for word in variation.split() if word in connectors)
+        connector_penalty = max(0, 1 - connector_count / 3)
+        
+        score = jaccard * length_penalty * connector_penalty
+        
+        return score if score > 0.4 else 0.0
 
 
 # Global keyword expander instance
