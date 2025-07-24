@@ -357,7 +357,6 @@ class SemanticClusteringService:
         
         for i in range(len(keywords)):
             for j in range(i + 1, len(keywords)):
-        # Fix: keywords contain 'keyword' field, not 'text'
                 word1 = keywords[i].get('keyword', keywords[i].get('text', ''))
                 word2 = keywords[j].get('keyword', keywords[j].get('text', ''))
                 similarities.append(self._are_morphologically_related(word1, word2))
