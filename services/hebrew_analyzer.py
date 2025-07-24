@@ -265,24 +265,32 @@ class HebrewSemanticAnalyzer:
         # Filter Hebrew content words
         content_words = []
         for token in tokens:
-            if (token['is_hebrew'] and 
-                token['is_alpha'] and 
-                not token['is_stop'] and
-                token['text'] not in self.stop_words and
-                len(token['text']) >= 2 and
-                token['pos'] in ['NOUN', 'ADJ', 'VERB', 'PROPN']):
+            # Safe access to token fields
+            is_hebrew = token.get('is_hebrew', False)
+            is_alpha = token.get('is_alpha', True)
+            is_stop = token.get('is_stop', False)
+            token_text = token.get('text', str(token) if isinstance(token, str) else '')
+            pos = token.get('pos', 'UNKNOWN')
+            
+            if (is_hebrew and 
+                is_alpha and 
+                not is_stop and
+                token_text not in self.stop_words and
+                len(token_text) >= 2 and
+                pos in ['NOUN', 'ADJ', 'VERB', 'PROPN']):
                 content_words.append(token)
         
         # Calculate keyword scores
-        word_freq = Counter([token['lemma'] for token in content_words])
+        word_freq = Counter([token.get('lemma', token.get('text', str(token) if isinstance(token, str) else '')) for token in content_words])
         pos_weights = {'NOUN': 1.5, 'PROPN': 1.8, 'ADJ': 1.2, 'VERB': 1.0}
         
         keyword_scores = {}
         for token in content_words:
-            lemma = token['lemma']
+            lemma = token.get('lemma', token.get('text', str(token) if isinstance(token, str) else ''))
             base_score = word_freq[lemma]
-            pos_weight = pos_weights.get(token['pos'], 1.0)
-            length_bonus = min(len(token['text']) / 10, 0.5)  # Longer words get slight bonus
+            pos_weight = pos_weights.get(token.get('pos', 'UNKNOWN'), 1.0)
+            token_text = token.get('text', str(token) if isinstance(token, str) else '')
+            length_bonus = min(len(token_text) / 10, 0.5)  # Longer words get slight bonus
             
             keyword_scores[lemma] = base_score * pos_weight + length_bonus
         
@@ -307,7 +315,7 @@ class HebrewSemanticAnalyzer:
         }
         
         theme_scores = defaultdict(int)
-        lemmas = [token['lemma'].lower() for token in tokens if token['is_hebrew']]
+        lemmas = [token.get('lemma', token.get('text', str(token) if isinstance(token, str) else '')).lower() for token in tokens if token.get('is_hebrew', False)]
         
         for theme, keywords in semantic_fields.items():
             for keyword in keywords:
@@ -333,14 +341,14 @@ class HebrewSemanticAnalyzer:
         if not tokens:
             return 0.0
             
-        hebrew_tokens = [t for t in tokens if t['is_hebrew']]
+        hebrew_tokens = [t for t in tokens if t.get('is_hebrew', False)]
         if not hebrew_tokens:
             return 0.0
             
         # Factors for complexity
-        avg_word_length = np.mean([len(t['text']) for t in hebrew_tokens])
-        pos_diversity = len(set(t['pos'] for t in hebrew_tokens))
-        morphological_complexity = sum(1 for t in hebrew_tokens if t['morph'])
+        avg_word_length = np.mean([len(t.get('text', '')) for t in hebrew_tokens])
+        pos_diversity = len(set(t.get('pos', 'UNKNOWN') for t in hebrew_tokens))
+        morphological_complexity = sum(1 for t in hebrew_tokens if t.get('morph', ''))
         
         # Normalize and combine
         length_score = min(avg_word_length / 8, 1.0)  # Normalize to 0-1
