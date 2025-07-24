@@ -353,7 +353,7 @@ class HebrewSemanticAnalyzer:
         # Normalize and combine
         length_score = min(avg_word_length / 8, 1.0)  # Normalize to 0-1
         pos_score = min(pos_diversity / 10, 1.0)  # Normalize to 0-1
-        morph_score = morphological_complexity / len(hebrew_tokens)
+        morph_score = morphological_complexity / max(len(hebrew_tokens), 1)  # Safe division
         
         complexity = (length_score + pos_score + morph_score) / 3
         return round(complexity, 3)
