@@ -238,15 +238,21 @@ class SemanticClusteringService:
         """Cluster keywords by part-of-speech patterns."""
         clusters = defaultdict(list)
         
-        # Group keywords by their dominant POS in the text
+        # Create POS mapping from tokens
         pos_mapping = {}
         for token in tokens:
-            if token['is_hebrew'] and token['lemma']:
-                pos_mapping[token['lemma']] = token['pos']
+            # Safe access to token fields
+            is_hebrew = token.get('is_hebrew', False)
+            lemma = token.get('lemma', '')
+            pos = token.get('pos', 'UNKNOWN')
+            
+            if is_hebrew and lemma:
+                pos_mapping[lemma] = pos
         
         # Group keywords by POS
         for kw in keywords:
-            pos = pos_mapping.get(kw['text'], 'UNKNOWN')
+            kw_text = kw.get('keyword', kw.get('text', str(kw) if isinstance(kw, str) else ''))
+            pos = pos_mapping.get(kw_text, 'UNKNOWN')
             if pos in ['NOUN', 'ADJ', 'VERB']:
                 clusters[pos].append(kw)
         
