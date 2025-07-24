@@ -347,6 +347,20 @@ class SemanticClusteringService:
         
         return np.mean(similarities) if similarities else 0.0
     
+    def _calculate_grammatical_coherence(self, keywords: List[Dict]) -> float:
+        """Calculate coherence score for grammatical cluster."""
+        if len(keywords) < 2:
+            return 0.0
+            
+        # Calculate average pairwise similarity within cluster
+        similarities = []
+        
+        for i in range(len(keywords)):
+            for j in range(i + 1, len(keywords)):
+                similarities.append(self._are_morphologically_related(keywords[i]['text'], keywords[j]['text']))
+        
+        return np.mean(similarities) if similarities else 0.0
+    
     def _create_single_cluster(self, keywords: List[Dict]) -> Dict[str, Any]:
         """Create a single cluster when not enough keywords for clustering."""
         if not keywords:
@@ -358,7 +372,7 @@ class SemanticClusteringService:
                 'root_concept': 'general_content',
                 'keywords': keywords,
                 'cluster_type': 'single',
-                'coherence_score': 0.5
+                'coherence_score': self._calculate_grammatical_coherence(keywords)  # Real calculation instead of fixed 0.5
             }],
             'clustering_metadata': {
                 'total_keywords': len(keywords),
