@@ -395,29 +395,19 @@ class HebrewKeywordExpander:
         keyword_lower = keyword.lower()
         return any(indicator in keyword_lower for indicator in location_indicators)
     
-    async def _generate_question_variations(self, keyword: str) -> List[str]:
-        """Generate question-based variations."""
-        variations = []
+    async def _generate_question_variations(self, keyword: str, options: Dict[str, Any] = None) -> List[str]:
+        """Generate only essential question variations."""
+        if not options.get('include_questions', True):
+            return []
         
-        question_patterns = [
+        # Only the 3 most important questions
+        essential_questions = [
             f"מה זה {keyword}",
             f"איך {keyword}",
-            f"למה {keyword}",
-            f"מתי {keyword}",
-            f"איפה {keyword}",
-            f"כמה עולה {keyword}",
-            f"איך לבחור {keyword}",
-            f"מה הטוב ב{keyword}",
-            f"איך עובד {keyword}",
-            f"מה ההבדל ב{keyword}",
-            f"למה צריך {keyword}",
-            f"איך להשתמש ב{keyword}",
-            f"מה היתרונות של {keyword}",
-            f"איך למצוא {keyword} טוב"
+            f"כמה עולה {keyword}"
         ]
         
-        variations.extend(question_patterns)
-        return variations
+        return essential_questions
     
     async def _generate_combined_variations(self, expanded_results: Dict[str, Dict], options: Dict[str, Any] = None) -> List[str]:
         """Generate highly selective combined variations."""
