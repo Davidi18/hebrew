@@ -301,11 +301,11 @@ class SemanticClusteringService:
         
         return optimized_clusters
     
-    def _are_morphologically_related(self, word1: str, word2: str) -> bool:
+    def _are_morphologically_related(self, word1: str, word2: str) -> float:
         """Check if two Hebrew words are morphologically related."""
-        # Simple heuristic: check for common substrings of length 3+
-        if len(word1) < 3 or len(word2) < 3:
-            return False
+        # Simple heuristic: check for common substrings of length 2+
+        if len(word1) < 2 or len(word2) < 2:
+            return 0.0
             
         # Find longest common substring
         common_length = 0
@@ -318,8 +318,20 @@ class SemanticClusteringService:
                     k += 1
                 common_length = max(common_length, k)
         
-        # Consider related if common substring is at least 3 characters
-        return common_length >= 3
+        # Return similarity score (0.0 to 1.0)
+        max_length = max(len(word1), len(word2))
+        if max_length == 0:
+            return 0.0
+        
+        # Base similarity on common substring ratio
+        similarity = common_length / max_length
+        
+        # Bonus for exact match
+        if word1 == word2:
+            return 1.0
+            
+        # Minimum threshold for considering words related
+        return max(similarity, 0.1)  # Give minimum score for any pair
     
     def _calculate_root_coherence(self, keywords: List[Dict], root: str) -> float:
         """Calculate coherence score for root-based cluster."""
