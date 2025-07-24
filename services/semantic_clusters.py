@@ -286,9 +286,9 @@ class SemanticClusteringService:
             # Filter out already seen keywords
             unique_keywords = []
             for kw in cluster['keywords']:
-                if kw['text'] not in seen_keywords:
+                if kw.get('keyword', kw.get('text', '')) not in seen_keywords:
                     unique_keywords.append(kw)
-                    seen_keywords.add(kw['text'])
+                    seen_keywords.add(kw.get('keyword', kw.get('text', '')))
             
             # Keep cluster if it still has enough keywords
             if len(unique_keywords) >= 2:
