@@ -122,10 +122,10 @@ class HebrewKeywordExpander:
         
         # Get token info safely with fallback
         tokens = analysis.get('tokens', [])
-        if tokens and isinstance(tokens[0], dict):
+        if tokens and len(tokens) > 0 and isinstance(tokens[0], dict):
             # Tokens are in correct Dict format
             token_info = tokens[0]
-        elif tokens and isinstance(tokens[0], str):
+        elif tokens and len(tokens) > 0 and isinstance(tokens[0], str):
             # Tokens are in string format, create dict structure
             token_info = {
                 'text': tokens[0],
