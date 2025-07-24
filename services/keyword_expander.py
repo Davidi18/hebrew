@@ -24,6 +24,7 @@ class HebrewKeywordExpander:
         self.semantic_relations = self._load_semantic_relations()
         self.common_prefixes = ['ה', 'ו', 'ב', 'כ', 'ל', 'מ', 'ש', 'ת']
         self.common_suffixes = ['ים', 'ות', 'ה', 'ת', 'ן', 'ך', 'נו', 'כם', 'הן', 'יה', 'ית']
+        self.max_variations_per_type = 10  # New attribute
         
     def _load_morphological_patterns(self) -> Dict[str, List[str]]:
         """Load Hebrew morphological transformation patterns."""
@@ -310,24 +311,26 @@ class HebrewKeywordExpander:
         return variations
     
     async def _generate_semantic_variations(self, keyword: str) -> List[str]:
-        """Generate semantically related variations."""
+        """Generate semantic variations with improved relevance filtering."""
         variations = []
         
-        # Check synonyms
+        # Check synonyms with exact matching
         for word, synonyms in self.semantic_relations['synonyms'].items():
-            if word in keyword or keyword in word:
-                variations.extend(synonyms)
+            if word == keyword:  # Exact match only
+                variations.extend(synonyms[:3])  # Limit to top 3 synonyms
+                break
         
-        # Check related terms
+        # Check related terms with stricter matching
         for word, related in self.semantic_relations['related_terms'].items():
-            if word in keyword or keyword in word:
-                variations.extend(related)
-                # Add combinations
-                for term in related:
+            if word == keyword:  # Exact match only, not substring
+                # Add only most relevant related terms
+                variations.extend(related[:2])  # Limit to top 2 related terms
+                # Add selective combinations
+                for term in related[:2]:
                     variations.append(f"{keyword} {term}")
-                    variations.append(f"{term} {keyword}")
+                break
         
-        return list(set(variations))
+        return list(set(variations))[:self.max_variations_per_type]
     
     async def _generate_commercial_variations(self, keyword: str) -> List[str]:
         """Generate commercial intent variations."""
