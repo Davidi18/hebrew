@@ -205,13 +205,11 @@ class HebrewTransformersLoader:
             
             def tokenize(self, text: str) -> List[str]:
                 if self.nlp is None:
-                    # Fallback to simple word splitting if no nlp model
                     return text.split()
                 try:
                     doc = self.nlp(text)
                     return [token.text for token in doc]
                 except Exception:
-                    # Fallback to simple splitting if nlp fails
                     return text.split()
             
             def __call__(self, text: str, return_tensors=None):
@@ -242,21 +240,31 @@ class HebrewTransformersLoader:
     # Analysis methods for Hebrew text
     async def analyze_text(self, text: str) -> Dict[str, Any]:
         """Comprehensive Hebrew text analysis."""
-        model_components = await self.get_model()
+        logger.info(f"Starting analyze_text for: {text[:50]}...")
         
         try:
+            model_components = await self.get_model()
+            logger.info("Model components retrieved successfully")
+            
             # Tokenization
+            logger.info("Starting tokenization...")
             tokens = model_components['tokenizer'].tokenize(text)
+            logger.info(f"Tokenization completed: {len(tokens)} tokens")
             
             # NER
+            logger.info("Starting NER...")
             entities = model_components['ner_pipeline'](text)
+            logger.info(f"NER completed: {len(entities) if isinstance(entities, list) else 0} entities")
             
             # Calculate Hebrew ratio for language stats
+            logger.info("Calculating Hebrew ratio...")
             hebrew_chars = sum(1 for char in text if '\u0590' <= char <= '\u05FF')
             total_chars = len([c for c in text if c.isalpha()])
             hebrew_ratio = hebrew_chars / max(total_chars, 1)
+            logger.info(f"Hebrew ratio calculated: {hebrew_ratio}")
             
             # Basic analysis
+            logger.info("Building analysis response...")
             analysis = {
                 'text': text,
                 'tokens': tokens,
@@ -272,10 +280,15 @@ class HebrewTransformersLoader:
                 }
             }
             
+            logger.info("Analysis completed successfully")
             return analysis
             
         except Exception as e:
-            logger.error(f"Text analysis failed: {e}")
+            logger.error(f"Text analysis failed with error: {e}")
+            logger.error(f"Error type: {type(e)}")
+            logger.error(f"Error args: {e.args}")
+            import traceback
+            logger.error(f"Full traceback: {traceback.format_exc()}")
             return {
                 'text': text,
                 'error': str(e),
