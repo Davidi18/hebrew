@@ -244,6 +244,11 @@ class HebrewTransformersLoader:
             # NER
             entities = model_components['ner_pipeline'](text)
             
+            # Calculate Hebrew ratio for language stats
+            hebrew_chars = sum(1 for char in text if '\u0590' <= char <= '\u05FF')
+            total_chars = len([c for c in text if c.isalpha()])
+            hebrew_ratio = hebrew_chars / max(total_chars, 1)
+            
             # Basic analysis
             analysis = {
                 'text': text,
@@ -252,7 +257,12 @@ class HebrewTransformersLoader:
                 'token_count': len(tokens),
                 'entity_count': len(entities) if isinstance(entities, list) else 0,
                 'model_used': model_components['model_name'],
-                'capabilities': model_components['capabilities']
+                'capabilities': model_components['capabilities'],
+                'language_stats': {
+                    'hebrew_ratio': hebrew_ratio,
+                    'total_chars': len(text),
+                    'hebrew_chars': hebrew_chars
+                }
             }
             
             return analysis
@@ -264,7 +274,12 @@ class HebrewTransformersLoader:
                 'error': str(e),
                 'tokens': text.split(),
                 'entities': [],
-                'model_used': 'fallback'
+                'model_used': 'fallback',
+                'language_stats': {
+                    'hebrew_ratio': 0.0,
+                    'total_chars': len(text),
+                    'hebrew_chars': 0
+                }
             }
     
     # Backward compatibility methods for existing code
