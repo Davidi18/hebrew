@@ -112,19 +112,23 @@ class HebrewSemanticAnalyzer:
         root_frequency = Counter()
         
         for token in tokens:
-            if not token['is_hebrew'] or token['text'] in self.stop_words:
+            # Safe access to token fields
+            is_hebrew = token.get('is_hebrew', False)
+            token_text = token.get('text', str(token) if isinstance(token, str) else '')
+            
+            if not is_hebrew or token_text in self.stop_words:
                 continue
                 
             # Try to find root using lemma
-            lemma = token['lemma']
+            lemma = token.get('lemma', token_text)
             if lemma and len(lemma) >= 2:
                 # Check against known roots
                 for root, variations in self.common_roots.items():
                     if lemma in variations or any(var in lemma for var in variations):
                         roots_found[root].append({
-                            'token': token['text'],
+                            'token': token_text,
                             'lemma': lemma,
-                            'pos': token['pos']
+                            'pos': token.get('pos', 'UNKNOWN')
                         })
                         root_frequency[root] += 1
                         break
@@ -133,9 +137,9 @@ class HebrewSemanticAnalyzer:
                     potential_root = self._extract_root_pattern(lemma)
                     if potential_root and len(potential_root) >= 2:
                         roots_found[potential_root].append({
-                            'token': token['text'],
+                            'token': token_text,
                             'lemma': lemma,
-                            'pos': token['pos']
+                            'pos': token.get('pos', 'UNKNOWN')
                         })
                         root_frequency[potential_root] += 1
         
