@@ -13,7 +13,14 @@ from fastapi.exceptions import RequestValidationError
 from loguru import logger
 from pydantic import ValidationError
 
-from schemas.responses import ErrorResponse, CustomJSONEncoder
+from schemas.responses import ErrorResponse
+
+
+def serialize_datetime(obj):
+    """Helper function to serialize datetime objects."""
+    if isinstance(obj, datetime):
+        return obj.isoformat()
+    raise TypeError(f"Object of type {type(obj).__name__} is not JSON serializable")
 
 
 def setup_error_handlers(app: FastAPI):
@@ -55,7 +62,7 @@ def setup_error_handlers(app: FastAPI):
         )
     
     @app.exception_handler(ValidationError)
-    async def pydantic_validation_handler(request: Request, exc: ValidationError):
+    async def pydantic_validation_exception_handler(request: Request, exc: ValidationError):
         """Handle Pydantic validation errors."""
         logger.warning(f"Pydantic validation error: {exc.errors()} - {request.url}")
         
