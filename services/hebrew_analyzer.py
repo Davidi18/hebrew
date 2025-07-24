@@ -308,37 +308,143 @@ class HebrewSemanticAnalyzer:
         }
     
     async def _analyze_content_themes(self, tokens: List[Dict]) -> Dict[str, Any]:
-        """Identify main content themes and topics."""
-        # Group related words by semantic fields
-        semantic_fields = {
-            'technology': ['מחשב', 'טכנולוגיה', 'אינטרנט', 'תוכנה', 'מערכת', 'דיגיטלי'],
-            'business': ['עסק', 'חברה', 'שיווק', 'מכירות', 'רווח', 'לקוח', 'שירות'],
-            'education': ['לימוד', 'חינוך', 'בית ספר', 'מורה', 'תלמיד', 'קורס'],
-            'health': ['בריאות', 'רפואה', 'רופא', 'חולה', 'טיפול', 'מחלה'],
-            'home': ['בית', 'מטבח', 'חדר', 'עיצוב', 'ריהוט', 'דירה']
-        }
+        """Identify main content themes using dynamic semantic clustering."""
+        # Extract meaningful Hebrew lemmas
+        hebrew_lemmas = []
+        for token in tokens:
+            if (token.get('is_hebrew', False) and 
+                token.get('is_alpha', True) and
+                not token.get('is_stop', False) and
+                token.get('text', '') not in self.stop_words and
+                len(token.get('text', '')) >= 3 and
+                token.get('pos', '') in ['NOUN', 'ADJ', 'VERB', 'PROPN']):
+                
+                lemma = token.get('lemma', token.get('text', ''))
+                hebrew_lemmas.append(lemma)
         
-        theme_scores = defaultdict(int)
-        lemmas = [token.get('lemma', token.get('text', str(token) if isinstance(token, str) else '')).lower() for token in tokens if token.get('is_hebrew', False)]
+        if len(hebrew_lemmas) < 5:  # Not enough content for theme analysis
+            return {
+                'themes': [],
+                'theme_clusters': {},
+                'semantic_density': 0.0,
+                'theme_coherence': 0.0
+            }
         
-        for theme, keywords in semantic_fields.items():
-            for keyword in keywords:
-                theme_scores[theme] += lemmas.count(keyword)
+        # Create text for TF-IDF analysis
+        text_for_analysis = ' '.join(hebrew_lemmas)
         
-        # Find dominant themes
-        total_theme_words = sum(theme_scores.values())
-        theme_percentages = {
-            theme: (score / total_theme_words * 100) if total_theme_words > 0 else 0
-            for theme, score in theme_scores.items()
-        }
+        # Use TF-IDF to find important terms
+        try:
+            # Create word frequency distribution
+            word_freq = Counter(hebrew_lemmas)
+            total_words = len(hebrew_lemmas)
+            
+            # Calculate TF-IDF-like scores manually for Hebrew
+            term_scores = {}
+            for word, freq in word_freq.items():
+                tf = freq / total_words
+                # Simple IDF approximation based on word length and frequency
+                idf = np.log(total_words / freq) + (len(word) / 10)
+                term_scores[word] = tf * idf
+            
+            # Get top terms
+            top_terms = sorted(term_scores.items(), key=lambda x: x[1], reverse=True)[:15]
+            
+            # Dynamic theme clustering based on co-occurrence
+            theme_clusters = self._cluster_semantic_terms([term[0] for term in top_terms], hebrew_lemmas)
+            
+            # Calculate semantic metrics
+            unique_lemmas = len(set(hebrew_lemmas))
+            semantic_density = unique_lemmas / len(hebrew_lemmas) if hebrew_lemmas else 0
+            
+            # Theme coherence based on cluster quality
+            theme_coherence = self._calculate_theme_coherence(theme_clusters, hebrew_lemmas)
+            
+            return {
+                'themes': [{'theme': f'cluster_{i}', 'terms': cluster, 'strength': len(cluster)} 
+                          for i, cluster in enumerate(theme_clusters) if len(cluster) >= 2],
+                'top_semantic_terms': [{'term': term, 'score': round(score, 3)} for term, score in top_terms[:10]],
+                'semantic_density': round(semantic_density, 3),
+                'theme_coherence': round(theme_coherence, 3),
+                'total_unique_concepts': unique_lemmas
+            }
+            
+        except Exception as e:
+            logger.warning(f"Theme analysis failed: {e}")
+            return {
+                'themes': [],
+                'top_semantic_terms': [],
+                'semantic_density': 0.0,
+                'theme_coherence': 0.0,
+                'total_unique_concepts': 0
+            }
+    
+    def _cluster_semantic_terms(self, top_terms: List[str], all_lemmas: List[str]) -> List[List[str]]:
+        """Cluster semantically related terms based on co-occurrence patterns."""
+        if len(top_terms) < 3:
+            return [top_terms] if top_terms else []
         
-        dominant_themes = sorted(theme_percentages.items(), key=lambda x: x[1], reverse=True)
+        # Create co-occurrence matrix
+        co_occurrence = defaultdict(lambda: defaultdict(int))
         
-        return {
-            'theme_distribution': dict(theme_percentages),
-            'dominant_themes': [theme for theme, pct in dominant_themes[:3] if pct > 5],
-            'theme_diversity': len([t for t in theme_percentages.values() if t > 0])
-        }
+        # Sliding window approach for co-occurrence
+        window_size = 5
+        for i in range(len(all_lemmas) - window_size + 1):
+            window = all_lemmas[i:i + window_size]
+            window_terms = [term for term in window if term in top_terms]
+            
+            # Count co-occurrences within window
+            for j, term1 in enumerate(window_terms):
+                for term2 in window_terms[j+1:]:
+                    co_occurrence[term1][term2] += 1
+                    co_occurrence[term2][term1] += 1
+        
+        # Simple clustering based on co-occurrence strength
+        clusters = []
+        used_terms = set()
+        
+        for term in top_terms:
+            if term in used_terms:
+                continue
+                
+            cluster = [term]
+            used_terms.add(term)
+            
+            # Find strongly co-occurring terms
+            if term in co_occurrence:
+                related_terms = sorted(co_occurrence[term].items(), 
+                                     key=lambda x: x[1], reverse=True)
+                
+                for related_term, strength in related_terms[:3]:  # Top 3 related
+                    if related_term not in used_terms and strength >= 2:
+                        cluster.append(related_term)
+                        used_terms.add(related_term)
+            
+            if len(cluster) >= 1:  # Keep even single-term clusters
+                clusters.append(cluster)
+        
+        return clusters
+    
+    def _calculate_theme_coherence(self, theme_clusters: List[List[str]], all_lemmas: List[str]) -> float:
+        """Calculate how coherent the identified themes are."""
+        if not theme_clusters or not all_lemmas:
+            return 0.0
+        
+        # Calculate coherence based on cluster sizes and distribution
+        total_clustered_terms = sum(len(cluster) for cluster in theme_clusters)
+        unique_terms = len(set(all_lemmas))
+        
+        if unique_terms == 0:
+            return 0.0
+        
+        # Coherence is higher when we have fewer, larger clusters
+        cluster_quality = 0
+        for cluster in theme_clusters:
+            if len(cluster) > 1:
+                cluster_quality += len(cluster) ** 1.5  # Reward larger clusters
+        
+        coherence = min(cluster_quality / (unique_terms * 2), 1.0)
+        return coherence
     
     def _calculate_complexity_score(self, tokens: List[Dict]) -> float:
         """Calculate content complexity score (0-1)."""
