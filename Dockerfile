@@ -30,7 +30,7 @@ RUN pip install --no-cache-dir --upgrade pip && \
 RUN pip uninstall hebspacy -y || true
 
 # Install Transformers for advanced Hebrew NLP
-RUN pip install --no-cache-dir transformers torch sentencepiece
+RUN pip install --no-cache-dir --timeout=300 --retries=5 transformers torch sentencepiece
 
 # Note: Hebrew models (heBERT) will be downloaded at runtime to avoid build-time issues
 # This approach is more flexible and avoids PyTorch security restrictions during build
