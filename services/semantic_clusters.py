@@ -261,7 +261,7 @@ class SemanticClusteringService:
                     'root_concept': pos,
                     'keywords': cluster_keywords,
                     'cluster_type': 'grammatical',
-                    'coherence_score': 0.7  # Fixed score for grammatical clusters
+                    'coherence_score': self._calculate_grammatical_coherence(cluster_keywords)  # Real calculation instead of fixed 0.7
                 })
         
         return result_clusters
