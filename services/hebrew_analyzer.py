@@ -88,8 +88,8 @@ class HebrewSemanticAnalyzer:
             'content_themes': results[4],
             'analysis_metadata': {
                 'processing_time_ms': 0,  # Will be calculated by caller
-                'hebrew_ratio': basic_analysis['language_stats']['hebrew_ratio'],
-                'complexity_score': self._calculate_complexity_score(basic_analysis['tokens'])
+                'hebrew_ratio': basic_analysis.get('language_stats', {}).get('hebrew_ratio', 0.0),
+                'complexity_score': self._calculate_complexity_score(basic_analysis.get('tokens', []))
             }
         }
     
