@@ -3,13 +3,18 @@ Response schemas for Hebrew Content Intelligence Service API.
 Pydantic models for API responses.
 """
 
+import json
 from typing import Optional, List, Dict, Any, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, ConfigDict
 from datetime import datetime
 
 
 class KeywordData(BaseModel):
     """Individual keyword with SEO data."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     keyword: str = Field(..., description="The keyword")
     volume: Optional[int] = Field(default=None, description="Monthly search volume")
     difficulty: Optional[float] = Field(default=None, description="Keyword difficulty score (0-100)")
@@ -19,6 +24,10 @@ class KeywordData(BaseModel):
 
 class KeywordVolume(BaseModel):
     """Keyword volume data."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     keyword: str = Field(..., description="The keyword")
     volume: Optional[int] = Field(default=None, description="Monthly search volume")
     data_source: str = Field(default="DataForSEO", description="Data source")
@@ -27,6 +36,10 @@ class KeywordVolume(BaseModel):
 
 class ResponseMetadata(BaseModel):
     """Response metadata information."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     timestamp: datetime = Field(default_factory=datetime.now, description="Response timestamp")
     processing_time_ms: Optional[float] = Field(default=None, description="Processing time in milliseconds")
     request_id: Optional[str] = Field(default=None, description="Request ID for tracking")
@@ -36,6 +49,10 @@ class ResponseMetadata(BaseModel):
 
 class SemanticCluster(BaseModel):
     """Semantic cluster of related keywords."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     cluster_name: str = Field(..., description="Name of the cluster")
     root_concept: str = Field(..., description="Root concept or theme")
     primary_keywords: List[KeywordData] = Field(..., description="Main keywords in cluster")
@@ -47,6 +64,10 @@ class SemanticCluster(BaseModel):
 
 class ContentGap(BaseModel):
     """Identified content gap opportunity."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     gap_type: str = Field(..., description="Type of content gap")
     description: str = Field(..., description="Description of the gap")
     keywords: List[KeywordData] = Field(..., description="Related keywords")
@@ -56,6 +77,10 @@ class ContentGap(BaseModel):
 
 class BusinessInsight(BaseModel):
     """Business insight from content analysis."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     insight_type: str = Field(..., description="Type of insight")
     title: str = Field(..., description="Insight title")
     description: str = Field(..., description="Detailed description")
@@ -66,6 +91,10 @@ class BusinessInsight(BaseModel):
 
 class AnalysisMetadata(BaseModel):
     """Metadata about the analysis process."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     processing_time_ms: int = Field(..., description="Processing time in milliseconds")
     hebrew_ratio: float = Field(..., description="Ratio of Hebrew content (0-1)")
     total_keywords_analyzed: int = Field(..., description="Total keywords analyzed")
@@ -75,6 +104,10 @@ class AnalysisMetadata(BaseModel):
 
 class ContentAnalysisResponse(BaseModel):
     """Complete content analysis response."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=True, description="Analysis success status")
     semantic_clusters: List[SemanticCluster] = Field(..., description="Generated semantic clusters")
     content_gaps: List[ContentGap] = Field(default_factory=list, description="Identified content gaps")
@@ -85,6 +118,10 @@ class ContentAnalysisResponse(BaseModel):
 
 class KeywordExpansionResult(BaseModel):
     """Result of keyword expansion."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     original: str = Field(..., description="Original keyword")
     morphological_info: Dict[str, Any] = Field(..., description="Morphological information")
     variations_by_type: Dict[str, List[str]] = Field(..., description="Variations by type")
@@ -94,6 +131,10 @@ class KeywordExpansionResult(BaseModel):
 
 class KeywordExpansionResponse(BaseModel):
     """Response for keyword expansion."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=True, description="Expansion success status")
     keyword_expansions: Dict[str, KeywordExpansionResult] = Field(..., description="Expansions per keyword")
     combined_variations: List[str] = Field(..., description="Combined keyword variations")
@@ -102,6 +143,10 @@ class KeywordExpansionResponse(BaseModel):
 
 class ClusteringResponse(BaseModel):
     """Response for semantic clustering."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=True, description="Clustering success status")
     semantic_clusters: List[SemanticCluster] = Field(..., description="Generated clusters")
     clustering_metadata: Dict[str, Any] = Field(..., description="Clustering metadata")
@@ -109,6 +154,10 @@ class ClusteringResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     """Health check response."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     status: str = Field(..., description="Service status")
     timestamp: datetime = Field(default_factory=datetime.now, description="Check timestamp")
     version: str = Field(..., description="Service version")
@@ -118,6 +167,10 @@ class HealthResponse(BaseModel):
 
 class ErrorResponse(BaseModel):
     """Error response schema."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=False, description="Request success status")
     error: str = Field(..., description="Error type")
     message: str = Field(..., description="Error message")
@@ -127,6 +180,10 @@ class ErrorResponse(BaseModel):
 
 class BatchAnalysisResponse(BaseModel):
     """Response for batch analysis."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=True, description="Batch analysis success status")
     results: List[ContentAnalysisResponse] = Field(..., description="Analysis results per text")
     batch_metadata: Dict[str, Any] = Field(..., description="Batch processing metadata")
@@ -135,6 +192,10 @@ class BatchAnalysisResponse(BaseModel):
 
 class SearchVolumeResponse(BaseModel):
     """Response for search volume lookup."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     success: bool = Field(default=True, description="Lookup success status")
     keywords: List[KeywordData] = Field(..., description="Keywords with volume data")
     metadata: Dict[str, Any] = Field(..., description="Lookup metadata")
@@ -143,6 +204,10 @@ class SearchVolumeResponse(BaseModel):
 
 class ServiceInfoResponse(BaseModel):
     """Service information response."""
+    model_config = ConfigDict(
+        json_encoders={datetime: lambda v: v.isoformat() if v else None}
+    )
+    
     service: Dict[str, Any] = Field(..., description="Service information")
     model: Dict[str, Any] = Field(..., description="Model information")
     configuration: Dict[str, Any] = Field(..., description="Configuration details")
