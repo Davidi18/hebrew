@@ -33,11 +33,13 @@ class Settings(BaseSettings):
     
     # Caching Configuration
     cache_type: str = Field(default="memory", env="CACHE_TYPE")  # memory, redis, disk
+    cache_enabled: bool = Field(default=True, env="CACHE_ENABLED")  # Enable/disable caching
     redis_url: str = Field(default="redis://localhost:6379/0", env="REDIS_URL")
     cache_ttl: int = Field(default=3600, env="CACHE_TTL")  # seconds
     
     # Performance Settings
     max_content_length: int = Field(default=50000, env="MAX_CONTENT_LENGTH")
+    max_keywords: int = Field(default=100, env="MAX_KEYWORDS")  # Maximum keywords to return
     request_timeout: int = Field(default=30, env="REQUEST_TIMEOUT")
     max_concurrent_requests: int = Field(default=10, env="MAX_CONCURRENT_REQUESTS")
 
