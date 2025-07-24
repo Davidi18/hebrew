@@ -247,8 +247,9 @@ class HebrewSemanticAnalyzer:
             pos_distribution[token['pos']] += 1
             
             # Parse morphological features
-            if token['morph']:
-                morph_features = token['morph'].split('|')
+            morph_data = token.get('morph', '')
+if morph_data:
+                morph_features = morph_data.split('|')
                 for feature in morph_features:
                     if '=' in feature:
                         key, value = feature.split('=', 1)
