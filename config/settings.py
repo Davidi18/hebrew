@@ -43,7 +43,8 @@ class Settings(BaseSettings):
 
     model_config = {
         "env_file": ".env",
-        "case_sensitive": False
+        "case_sensitive": False,
+        "extra": "allow"  # Allow extra fields from Coolify environment variables
     }
 
 
