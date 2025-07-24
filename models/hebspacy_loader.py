@@ -204,8 +204,15 @@ class HebrewTransformersLoader:
                 self.nlp = nlp
             
             def tokenize(self, text: str) -> List[str]:
-                doc = self.nlp(text)
-                return [token.text for token in doc]
+                if self.nlp is None:
+                    # Fallback to simple word splitting if no nlp model
+                    return text.split()
+                try:
+                    doc = self.nlp(text)
+                    return [token.text for token in doc]
+                except Exception:
+                    # Fallback to simple splitting if nlp fails
+                    return text.split()
             
             def __call__(self, text: str, return_tensors=None):
                 tokens = self.tokenize(text)
