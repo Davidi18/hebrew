@@ -44,11 +44,11 @@ async def expand_keywords(request: KeywordExpansionRequest):
         keyword_expansions = {}
         for keyword, expansion_data in expansion_result.get('keyword_expansions', {}).items():
             keyword_expansions[keyword] = KeywordExpansionResult(
-                original=expansion_data['original'],
-                morphological_info=expansion_data['morphological_info'],
-                variations_by_type=expansion_data['variations_by_type'],
-                all_variations=expansion_data['all_variations'],
-                expansion_score=expansion_data['expansion_score']
+                original=expansion_data.get('original', keyword),
+                morphological_info=expansion_data.get('morphological_info', {}),
+                variations_by_type=expansion_data.get('variations_by_type', {}),
+                all_variations=expansion_data.get('all_variations', []),
+                expansion_score=expansion_data.get('expansion_score', 0.0)
             )
         
         processing_time = int((time.time() - start_time) * 1000)
