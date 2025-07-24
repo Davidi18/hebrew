@@ -248,8 +248,25 @@ class HebrewTransformersLoader:
             
             # Tokenization
             logger.info("Starting tokenization...")
-            tokens = model_components['tokenizer'].tokenize(text)
-            logger.info(f"Tokenization completed: {len(tokens)} tokens")
+            raw_tokens = model_components['tokenizer'].tokenize(text)
+            logger.info(f"Tokenization completed: {len(raw_tokens)} tokens")
+            
+            # Convert tokens to expected format for hebrew_analyzer
+            tokens = []
+            for token_text in raw_tokens:
+                # Check if token is Hebrew
+                is_hebrew = any('\u0590' <= char <= '\u05FF' for char in token_text)
+                
+                tokens.append({
+                    'text': token_text,
+                    'lemma': token_text.lower(),  # Simple lemmatization fallback
+                    'pos': 'UNKNOWN',  # Default POS tag
+                    'is_hebrew': is_hebrew,
+                    'is_alpha': token_text.isalpha(),
+                    'is_stop': False  # Could be enhanced later
+                })
+            
+            logger.info(f"Token formatting completed: {len(tokens)} structured tokens")
             
             # NER
             logger.info("Starting NER...")
